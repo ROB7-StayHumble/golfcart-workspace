@@ -1,4 +1,6 @@
 devel/
+install/
+.catkin_tools/
 logs/
 build/
 bin/
