@@ -179,7 +179,7 @@ class camera_processing():
     def lidar_callback(self, lidar_data):
         try:
             ranges = np.array(lidar_data.ranges)
-            ranges[ranges == 0] = LIDAR_SETZEROTO
+            ranges[ranges < lidar_data.range_min] = LIDAR_SETZEROTO
             update_lidar(ranges)
         except Exception as e:
             print(e)

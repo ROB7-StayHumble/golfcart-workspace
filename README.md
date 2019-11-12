@@ -19,6 +19,8 @@ git checkout 1.13.0
 cd ../../
 # Build
 catkin build cv_bridge
+# Build everything
+catkin build
 # Extend environment with new package
 source install/setup.bash --extend
 ```
