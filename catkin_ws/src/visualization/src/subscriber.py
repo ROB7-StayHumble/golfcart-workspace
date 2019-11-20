@@ -13,13 +13,15 @@ from scipy.signal import butter, filtfilt, find_peaks
 from pyqtgraph.Qt import QtGui, QtCore
 import pyqtgraph as pg
 
+from KittiSeg import run_detection
+
 H_ZED = 720
 W_ZED = 1280
 H_IR = 600
 W_IR = 800
 
 LIDAR_SETZEROTO = 60
-RUN_PERSON_DETECTION = True
+RUN_PERSON_DETECTION = False
 RUN_LANE_DETECTION = True
 RUN_HOUGH = False
 
@@ -65,8 +67,10 @@ if RUN_LANE_DETECTION:
     #p_lidar.setYRange(0, 50, padding=0)
     curve_lidar_smooth.setPen(pg.mkPen({'color': (100, 255, 255, 150), 'width': 4}))
 
-    p_ir_lane = winLane.addPlot(row=1, col=2, rowspan=2, title = 'IR cam')
+    p_ir_lane = winLane.addPlot(row=1, col=2, rowspan=1, title = 'IR cam')
     p_ir_edges = winLane.addPlot(row=2, col=1, rowspan=1, title='IR cam')
+    p_ir_kitti = winLane.addPlot(row=2, col=2, rowspan=1, title='IR cam')
+
     imgItem_ir_lane = pg.ImageItem()
     curve_ir_lane = p_ir_lane.plot()
     curve_ir_lane.getViewBox().invertY(True)
@@ -123,13 +127,21 @@ def update_zed(image):
         imgItem_zed.setImage(image,autoDownsample=True)          # set the curve with this data
     QtGui.QApplication.processEvents()    # you MUST process the plot now
 
+running_kittiseg = False
+
 def update_ir(image):
+    global running_kittiseg
     if RUN_PERSON_DETECTION:
         image_people = np.swapaxes(image,0,1)
         imgItem_ir.setImage(image_people, autoDownsample=True)  # set the curve with this data
     if RUN_LANE_DETECTION:
         image_ir_inv = np.swapaxes(image, 0, 1)
-        imgItem_ir_lane.setImage(image_ir_inv, autoDownsample=True)  # set the curve with this data
+        if running_kittiseg == False:
+            running_kittiseg = True
+            kittiseg = run_detection.run_detection(image_ir_inv)
+            running_kittiseg = False
+        else: kittiseg = image_ir_inv
+        imgItem_ir_lane.setImage(kittiseg, autoDownsample=True)  # set the curve with this data
         if RUN_HOUGH:
             detected = draw_lanes(image)
             image_edges_inv = np.swapaxes(detected, 0, 1)
@@ -164,23 +176,20 @@ class camera_processing():
 
     def zed_callback(self, img_data):
         try:
-            image = self.bridge.imgmsg_to_cv2(img_data, "bgra8")
+            image = self.bridge.imgmsg_to_cv2(img_data, "bgr8")
             update_zed(image)
         except Exception as e:
             print(e)
 
     def ir_callback(self, img_data):
-        try:
-            image = self.bridge.imgmsg_to_cv2(img_data, "bgra8")
-            update_ir(image)
-        except Exception as e:
-            print(e)
+        image = self.bridge.imgmsg_to_cv2(img_data, "bgr8")
+        update_ir(image)
 
     def lidar_callback(self, lidar_data):
         try:
             ranges = np.array(lidar_data.ranges)
             ranges[ranges < lidar_data.range_min] = LIDAR_SETZEROTO
-            update_lidar(ranges)
+            # update_lidar(ranges)
         except Exception as e:
             print(e)
 
