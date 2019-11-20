@@ -33,6 +33,7 @@ def angle_from_box(img,box):
 
     return angle
 
+
 def plot_boxes(img, boxes, color='white'):
 	global colors
 	for box in boxes:
@@ -42,11 +43,13 @@ def plot_boxes(img, boxes, color='white'):
 		cv2.putText(img, str(angle), (xA, yA-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, colors[color], 2)
 	return img
 
+
 def run_hog_on_img(img):
 	boxes, weights = hog.detectMultiScale(img, winStride=WIN_STRIDE)
 	boxes = np.array([[x, y, x + w, y + h] for (x, y, w, h) in boxes])
 
 	return boxes
+
 
 class people_publisher():
 
@@ -54,21 +57,26 @@ class people_publisher():
         rospy.init_node('camera_handler', anonymous=True)
         self.bridge = CvBridge()
 
-        rospy.Subscriber("/zed_node/rgb/image_rect_color", Image, self.img_callback)
-        rospy.Subscriber("/ircam_data", Image, self.img_callback)
+        rospy.Subscriber("/zed_node/rgb/image_rect_color", Image, self.zed_callback)
+        rospy.Subscriber("/ircam_data", Image, self.ir_callback)
 
-        self.image_pub = rospy.Publisher("/viz_people",Image)
+        self.image_pub_ir = rospy.Publisher("/people_hog_ir",Image)
+        self.image_pub_zed = rospy.Publisher("/people_hog_zed", Image)
 
+    def ir_callback(self, img_data):
+        image = self.bridge.imgmsg_to_cv2(img_data, "bgr8")
+        boxes = run_hog_on_img(image)
+        print(boxes)
+        img_people = plot_boxes(image, boxes, color='blue')
+        self.image_pub_ir.publish(self.bridge.cv2_to_imgmsg(img_people, "bgr8"))
 
-    def img_callback(self, img_data):
-        try:
-            image = self.bridge.imgmsg_to_cv2(img_data, "bgr8")
-            boxes = run_hog_on_img(image)
-            print(boxes)
-            img_people = plot_boxes(image, boxes, color='blue')
-            self.image_pub.publish(self.bridge.cv2_to_imgmsg(img_people, "bgr8"))
-        except Exception as e:
-            print(e)
+    def zed_callback(self, img_data):
+        image = self.bridge.imgmsg_to_cv2(img_data, "bgr8")
+        boxes = run_hog_on_img(image)
+        print(boxes)
+        img_people = plot_boxes(image, boxes, color='blue')
+        self.image_pub_zed.publish(self.bridge.cv2_to_imgmsg(img_people, "bgr8"))
+
 
 if __name__ == '__main__':
     try:

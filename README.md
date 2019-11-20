@@ -18,9 +18,9 @@ cd src/vision_opencv/
 git checkout 1.13.0
 cd ../../
 # Build
-catkin build cv_bridge
+catkin build cv_bridge -DCATKIN_ENABLE_TESTING=0
 # Build everything
-catkin build
+catkin build -DCATKIN_ENABLE_TESTING=0
 # Extend environment with new package
 source install/setup.bash --extend
 ```
