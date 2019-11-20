@@ -21,67 +21,40 @@ H_IR = 600
 W_IR = 800
 
 LIDAR_SETZEROTO = 60
-RUN_PERSON_DETECTION = False
-RUN_LANE_DETECTION = True
 RUN_HOUGH = False
 
-if RUN_PERSON_DETECTION:
-    winPeople = pg.GraphicsWindow(title="Person detection") # creates a window
-    p_lidar_people = winPeople.addPlot(row=1, col=1, title="LIDAR data", labels={'left': 'Range (meters)',
-                                                                                 'bottom': 'Angle (degrees)'})  # creates empty space for the plot in the window
-    curve_lidar_people = p_lidar_people.plot()  # create an empty "plot" (a curve to plot)
-    p_lidar_people.showGrid(x=True, y=True)
-    curve_lidar_people.getViewBox().invertX(True)
-    curve_lidar_people.getViewBox().setLimits(yMin=0, yMax=80)
-    curve_lidar_people.getViewBox().setAspectLocked(True)
+winLane = pg.GraphicsWindow(title="Lane detection") # creates a window
+p_lidar_lane = winLane.addPlot(row=1, col=1, rowspan=1, title="LIDAR data",labels={'left':'Range (meters)','bottom':'Angle (degrees)'})  # creates empty space for the plot in the window
+curve_lidar_lane = p_lidar_lane.plot()
+curve_lidar_smooth = p_lidar_lane.plot()                        # create an empty "plot" (a curve to plot)
+p_lidar_lane.showGrid(x=True,y=True)
+curve_lidar_lane.getViewBox().invertX(True)
+curve_lidar_lane.getViewBox().setLimits(yMin=0,yMax=80)
+curve_lidar_lane.getViewBox().setAspectLocked(True)
+#p_lidar.setYRange(0, 50, padding=0)
+curve_lidar_smooth.setPen(pg.mkPen({'color': (100, 255, 255, 150), 'width': 4}))
 
-    p_ir_people = winPeople.addPlot(row=1, col=2, rowspan=2, title='IR cam')
-    imgItem_ir = pg.ImageItem()
-    curve_ir = p_ir_people.plot()
-    curve_ir.getViewBox().invertY(True)
-    curve_ir.getViewBox().setAspectLocked(True)
-    p_ir_people.hideAxis('left')
-    p_ir_people.hideAxis('bottom')
-    p_ir_people.addItem(imgItem_ir)
+p_ir_lane = winLane.addPlot(row=1, col=2, rowspan=1, title = 'IR cam')
+p_ir_edges = winLane.addPlot(row=2, col=1, rowspan=1, title='Hough transform')
+p_ir_kitti = winLane.addPlot(row=2, col=2, rowspan=1, title='KittiSeg')
 
-    p_zed = winPeople.addPlot(row=2, col=1, title='ZED cam')
-    imgItem_zed = pg.ImageItem()
-    curve_zed = p_zed.plot()
-    curve_zed.getViewBox().invertY(True)
+imgItem_ir_lane = pg.ImageItem()
+curve_ir_lane = p_ir_lane.plot()
+curve_ir_lane.getViewBox().invertY(True)
+curve_ir_lane.getViewBox().setAspectLocked(True)
+p_ir_lane.addItem(imgItem_ir_lane)
 
-    curve_zed.getViewBox().setLimits(xMin=0, xMax=W_ZED)
-    curve_zed.getViewBox().setAspectLocked(True)
-    p_zed.hideAxis('left')
-    p_zed.hideAxis('bottom')
-    p_zed.addItem(imgItem_zed)
+imgItem_ir_edges = pg.ImageItem()
+curve_ir_edges = p_ir_edges.plot()
+curve_ir_edges.getViewBox().invertY(True)
+curve_ir_edges.getViewBox().setAspectLocked(True)
+p_ir_edges.addItem(imgItem_ir_edges)
 
-if RUN_LANE_DETECTION:
-    winLane = pg.GraphicsWindow(title="Lane detection") # creates a window
-    p_lidar_lane = winLane.addPlot(row=1, col=1, rowspan=1, title="LIDAR data",labels={'left':'Range (meters)','bottom':'Angle (degrees)'})  # creates empty space for the plot in the window
-    curve_lidar_lane = p_lidar_lane.plot()
-    curve_lidar_smooth = p_lidar_lane.plot()                        # create an empty "plot" (a curve to plot)
-    p_lidar_lane.showGrid(x=True,y=True)
-    curve_lidar_lane.getViewBox().invertX(True)
-    curve_lidar_lane.getViewBox().setLimits(yMin=0,yMax=80)
-    curve_lidar_lane.getViewBox().setAspectLocked(True)
-    #p_lidar.setYRange(0, 50, padding=0)
-    curve_lidar_smooth.setPen(pg.mkPen({'color': (100, 255, 255, 150), 'width': 4}))
-
-    p_ir_lane = winLane.addPlot(row=1, col=2, rowspan=1, title = 'IR cam')
-    p_ir_edges = winLane.addPlot(row=2, col=1, rowspan=1, title='IR cam')
-    p_ir_kitti = winLane.addPlot(row=2, col=2, rowspan=1, title='IR cam')
-
-    imgItem_ir_lane = pg.ImageItem()
-    curve_ir_lane = p_ir_lane.plot()
-    curve_ir_lane.getViewBox().invertY(True)
-    curve_ir_lane.getViewBox().setAspectLocked(True)
-    p_ir_lane.addItem(imgItem_ir_lane)
-
-    imgItem_ir_edges = pg.ImageItem()
-    curve_ir_edges = p_ir_edges.plot()
-    curve_ir_edges.getViewBox().invertY(True)
-    curve_ir_edges.getViewBox().setAspectLocked(True)
-    p_ir_edges.addItem(imgItem_ir_edges)
+imgItem_ir_kitti = pg.ImageItem()
+curve_ir_kitti = p_ir_edges.plot()
+curve_ir_kitti.getViewBox().invertY(True)
+curve_ir_kitti.getViewBox().setAspectLocked(True)
+p_ir_kitti.addItem(imgItem_ir_edges)
 
 def show_lane_direction(angles):
     for line in angleLines:
@@ -122,30 +95,23 @@ def smooth_lidar_data(method,data_x,data_y):
 
 # Realtime data plot. Each time this function is called, the data display is updated
 def update_zed(image):
-    if RUN_PERSON_DETECTION:
-        image = np.swapaxes(image,0,1)
-        imgItem_zed.setImage(image,autoDownsample=True)          # set the curve with this data
     QtGui.QApplication.processEvents()    # you MUST process the plot now
 
 running_kittiseg = False
 
 def update_ir(image):
     global running_kittiseg
-    if RUN_PERSON_DETECTION:
-        image_people = np.swapaxes(image,0,1)
-        imgItem_ir.setImage(image_people, autoDownsample=True)  # set the curve with this data
-    if RUN_LANE_DETECTION:
-        image_ir_inv = np.swapaxes(image, 0, 1)
-        if running_kittiseg == False:
-            running_kittiseg = True
-            kittiseg = run_detection.run_detection(image_ir_inv)
-            running_kittiseg = False
-        else: kittiseg = image_ir_inv
-        imgItem_ir_lane.setImage(kittiseg, autoDownsample=True)  # set the curve with this data
-        if RUN_HOUGH:
-            detected = draw_lanes(image)
-            image_edges_inv = np.swapaxes(detected, 0, 1)
-            imgItem_ir_edges.setImage(image_edges_inv, autoDownsample=True)  # set the curve with this data
+    image_ir_inv = np.swapaxes(image, 0, 1)
+    kittiseg = image_ir_inv
+    if running_kittiseg == False:
+        running_kittiseg = True
+        kittiseg = run_detection.run_detection(image_ir_inv)
+    imgItem_ir_kitti.setImage(kittiseg, autoDownsample=True)  # set the curve with this data
+    imgItem_ir_lane.setImage(image_ir_inv, autoDownsample=True)  # set the curve with this data
+    if RUN_HOUGH:
+        detected = draw_lanes(image)
+        image_edges_inv = np.swapaxes(detected, 0, 1)
+        imgItem_ir_edges.setImage(image_edges_inv, autoDownsample=True)  # set the curve with this data
     QtGui.QApplication.processEvents()    # you MUST process the plot now
 
 angleLines = []
@@ -153,14 +119,11 @@ angles = np.arange(-90,90.5,0.5)
 # Realtime data plot. Each time this function is called, the data display is updated
 def update_lidar(lidar_ranges):
     angleLines = []
-    if RUN_PERSON_DETECTION:
-        curve_lidar_people.setData(angles, lidar_ranges)
-    if RUN_LANE_DETECTION:
-        smooth = smooth_lidar_data('butter',angles,lidar_ranges)
-        curve_lidar_lane.setData(angles, lidar_ranges)
-        curve_lidar_smooth.setData(angles,smooth)
-        lane_angles = angles_of_max_ranges(angles,smooth)
-        #show_lane_direction(lane_angles)
+    smooth = smooth_lidar_data('butter',angles,lidar_ranges)
+    curve_lidar_lane.setData(angles, lidar_ranges)
+    curve_lidar_smooth.setData(angles,smooth)
+    lane_angles = angles_of_max_ranges(angles,smooth)
+    #show_lane_direction(lane_angles)
     QtGui.QApplication.processEvents()    # you MUST process the plot now
 
 class camera_processing():
@@ -175,11 +138,8 @@ class camera_processing():
 
 
     def zed_callback(self, img_data):
-        try:
-            image = self.bridge.imgmsg_to_cv2(img_data, "bgr8")
-            update_zed(image)
-        except Exception as e:
-            print(e)
+        image = self.bridge.imgmsg_to_cv2(img_data, "bgr8")
+        update_zed(image)
 
     def ir_callback(self, img_data):
         image = self.bridge.imgmsg_to_cv2(img_data, "bgr8")
@@ -189,7 +149,7 @@ class camera_processing():
         try:
             ranges = np.array(lidar_data.ranges)
             ranges[ranges < lidar_data.range_min] = LIDAR_SETZEROTO
-            # update_lidar(ranges)
+            update_lidar(ranges)
         except Exception as e:
             print(e)
 
