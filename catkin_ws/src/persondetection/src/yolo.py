@@ -241,7 +241,7 @@ def detect_from_img(img):
 
                 # Write results
                 for *xyxy, conf, _, cls in det:
-                    if view_img:  # Add bbox to image
+                    if view_img and int(cls) == 0:  # Add bbox to image
                         label = '%s %.2f' % (classes[int(cls)], conf)
                         plot_one_box(xyxy, im0, label=label, color=colors[int(cls)])
 
