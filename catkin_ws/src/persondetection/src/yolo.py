@@ -18,6 +18,7 @@ from yolov3.utils.utils import *
 
 from utils.boxes import *
 
+from utils.transformbox import get_boxes_zedframe
 
 os.chdir('src/persondetection/include/yolov3/')
 CFG =       'cfg/yolov3-tiny.cfg'
@@ -256,6 +257,7 @@ def detect_from_img(img):
 
 from sensor_msgs.msg import Image, LaserScan
 
+
 class people_yolo_publisher():
 
     def __init__(self):
@@ -267,24 +269,47 @@ class people_yolo_publisher():
 
         self.image_pub_ir = rospy.Publisher("/people_yolo_ir",Image)
         self.image_pub_zed = rospy.Publisher("/people_yolo_zed", Image)
+        self.image_pub_zedir = rospy.Publisher("/people_yolo_zedir", Image)
+        self.image_pub_map = rospy.Publisher("/people_yolo_map", Image)
+
+        self.boxes_zedframe_class = []
+        self.boxes_combined = []
 
     def ir_callback(self, img_data):
         image = self.bridge.imgmsg_to_cv2(img_data, "bgr8")
         img_boxes, boxes = detect_from_img(image)
-        print(boxes)
+        # print(boxes)
         self.image_pub_ir.publish(self.bridge.cv2_to_imgmsg(img_boxes, "bgr8"))
-        boxes = [Box(image,xyxy=box['coords'],confidence=box['conf']) for box in boxes]
-
-        map = makeConfidenceMapFromBoxes(image,boxes)
-        map = cv2.convertScaleAbs(map, alpha=255/map.max())
-        self.image_pub_ir.publish(self.bridge.cv2_to_imgmsg(map, "bgr8"))
+        boxes_class = [Box(image,xyxy=box['coords'],confidence=box['conf']) for box in boxes]
+        confs = [box['conf'] for box in boxes]
+        boxes_zedframe = get_boxes_zedframe([box['coords'] for box in boxes])
+        for i,box in enumerate(boxes_zedframe):
+            print(box)
+            min_x = int(np.min([coord[0] for coord in box]))
+            max_x = int(np.max([coord[0] for coord in box]))
+            max_y = int(np.max([coord[1] for coord in box]))
+            min_y = int(np.min([coord[1] for coord in box]))
+            self.boxes_zedframe_class.append({'coords':[min_x,min_y,max_x,max_y],
+                                              'conf':confs[i]})
+        if len(self.boxes_zedframe_class)>20:
+            self.boxes_zedframe_class = self.boxes_zedframe_class[-20:]
+        # map = makeConfidenceMapFromBoxes(image,boxes_class)
+        # map = cv2.convertScaleAbs(map, alpha=255/map.max())
+        # self.image_pub_ir.publish(self.bridge.cv2_to_imgmsg(map, "bgr8"))
 
     def zed_callback(self, img_data):
         image = self.bridge.imgmsg_to_cv2(img_data, "bgr8")
         img_boxes, boxes = detect_from_img(image)
-        print(boxes)
         self.image_pub_zed.publish(self.bridge.cv2_to_imgmsg(img_boxes, "bgr8"))
-
+        boxes_zed_class = [Box(image, xyxy=box['coords'], confidence=box['conf']) for box in boxes]
+        self.boxes_combined = boxes_zed_class
+        for box in self.boxes_zedframe_class:
+            print(box)
+            box_class = Box(image, xyxy=box['coords'], confidence=box['conf'])
+            self.boxes_combined.append(box_class)
+        map = makeConfidenceMapFromBoxes(image,self.boxes_combined)
+        map = cv2.convertScaleAbs(map, alpha=255/map.max())
+        self.image_pub_map.publish(self.bridge.cv2_to_imgmsg(map, "bgr8"))
 
 if __name__ == '__main__':
     try:
