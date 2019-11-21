@@ -8,7 +8,7 @@ import cv2
 from std_msgs.msg import String
 from sensor_msgs.msg import Image, LaserScan
 from cv_bridge import CvBridge, CvBridgeError
-
+import os
 import argparse
 from sys import platform
 
@@ -16,11 +16,14 @@ from yolov3.models import *  # set ONNX_EXPORT in models.py
 from yolov3.utils.datasets import *
 from yolov3.utils.utils import *
 
-CFG =       'src/persondetection/include/yolov3/cfg/yolov3-tiny.cfg'
-WEIGHTS =   'src/persondetection/include/yolov3/weights/yolov3-tiny.weights'
-SOURCE =    'src/persondetection/include/yolov3/data/samples'
-OUTPUT =    'src/persondetection/include/yolov3/output'
-DATA =      'src/persondetection/include/yolov3/data/coco.data'
+
+os.chdir('src/persondetection/include/yolov3/')
+CFG =       'cfg/yolov3-tiny.cfg'
+WEIGHTS =   'weights/yolov3-tiny.weights'
+SOURCE =    'data/samples'
+OUTPUT =    'output'
+DATA =      'data/coco.data'
+
 HALF = False
 VIEW_IMG = False
 CONF_THRESH = 0.3
@@ -28,7 +31,7 @@ NMS_THRESH = 0.5
 
 def detect(save_txt=False, save_img=False):
     with torch.no_grad():
-        img_size = (320, 192)
+        img_size = 416
         out, source, weights, half, view_img = OUTPUT, SOURCE, WEIGHTS, HALF, VIEW_IMG
         webcam = source == '0' or source.startswith('rtsp') or source.startswith('http') or source.endswith('.txt')
 
@@ -68,13 +71,14 @@ def detect(save_txt=False, save_img=False):
 
         # Set Dataloader
         vid_path, vid_writer = None, None
-        if webcam:
-            view_img = True
-            torch.backends.cudnn.benchmark = True  # set True to speed up constant image size inference
-            dataset = LoadStreams(source, img_size=img_size, half=half)
-        else:
-            save_img = True
-            dataset = LoadImages(source, img_size=img_size, half=half)
+        # if webcam:
+        #     view_img = True
+        #     torch.backends.cudnn.benchmark = True  # set True to speed up constant image size inference
+        #     dataset = LoadStreams(source, img_size=img_size, half=half)
+        # else:
+        save_img = True
+        dataset = LoadImages(source, img_size=img_size, half=half)
+        print(dataset)
 
         # Get classes and colors
         classes = load_classes(parse_data_cfg(DATA)['names'])
