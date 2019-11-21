@@ -3,12 +3,7 @@ from distutils.core import setup
 from catkin_pkg.python_setup import generate_distutils_setup
 # fetch values from package.xml
 setup_args = generate_distutils_setup(
-    packages=['visualization',
-              'KittiSeg',
-              'KittiSeg.incl.seg_utils',
-              'KittiSeg.incl.tensorvision',
-              'KittiSeg.incl.evaluation',
-              'KittiSeg.incl.tensorflow_fcn'],
+    packages=['visualization'],
     package_dir={'': 'include'},
 )
 setup(**setup_args)
