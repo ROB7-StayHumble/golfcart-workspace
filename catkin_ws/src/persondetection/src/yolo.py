@@ -227,6 +227,7 @@ def detect_from_img(img):
         if classify:
             pred = apply_classifier(pred, modelc, img, im0s)
 
+        boxes = []
         # Process detections
         for i, det in enumerate(pred):  # detections per image
             s = ''
@@ -234,16 +235,13 @@ def detect_from_img(img):
                 # Rescale boxes from img_size to im0 size
                 det[:, :4] = scale_coords(img.shape[2:], det[:, :4], im0.shape).round()
 
-                # Print results
-                for c in det[:, -1].unique():
-                    n = (det[:, -1] == c).sum()  # detections per class
-                    s += '%g %ss, ' % (n, classes[int(c)])  # add to string
-
                 # Write results
                 for *xyxy, conf, _, cls in det:
                     if view_img and int(cls) == 0:  # Add bbox to image
                         label = '%s %.2f' % (classes[int(cls)], conf)
                         plot_one_box(xyxy, im0, label=label, color=colors[int(cls)])
+                        box = [int(x) for x in [*xyxy]]
+                        boxes.append(box)
 
             print('%sDone. (%.3fs)' % ('', time.time() - t))
 
@@ -252,7 +250,7 @@ def detect_from_img(img):
             #     cv2.imshow('yolo', im0)
             #     cv2.waitKey(0)
 
-    return im0
+    return im0, boxes
 
 from sensor_msgs.msg import Image, LaserScan
 
@@ -263,14 +261,22 @@ class people_yolo_publisher():
         self.bridge = CvBridge()
 
         rospy.Subscriber("/ircam_data", Image, self.ir_callback)
+        rospy.Subscriber("/zed_node/rgb/image_rect_color", Image, self.zed_callback)
 
         self.image_pub_ir = rospy.Publisher("/people_yolo_ir",Image)
+        self.image_pub_zed = rospy.Publisher("/people_yolo_zed", Image)
 
     def ir_callback(self, img_data):
-        print("new image")
         image = self.bridge.imgmsg_to_cv2(img_data, "bgr8")
-        boxes = detect_from_img(image)
-        self.image_pub_ir.publish(self.bridge.cv2_to_imgmsg(boxes, "bgr8"))
+        img_boxes, boxes = detect_from_img(image)
+        print(boxes)
+        self.image_pub_ir.publish(self.bridge.cv2_to_imgmsg(img_boxes, "bgr8"))
+
+    def zed_callback(self, img_data):
+        image = self.bridge.imgmsg_to_cv2(img_data, "bgr8")
+        img_boxes, boxes = detect_from_img(image)
+        print(boxes)
+        self.image_pub_zed.publish(self.bridge.cv2_to_imgmsg(img_boxes, "bgr8"))
 
 
 if __name__ == '__main__':
