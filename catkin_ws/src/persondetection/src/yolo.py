@@ -16,6 +16,8 @@ from yolov3.models import *  # set ONNX_EXPORT in models.py
 from yolov3.utils.datasets import *
 from yolov3.utils.utils import *
 
+from utils.boxes import *
+
 
 os.chdir('src/persondetection/include/yolov3/')
 CFG =       'cfg/yolov3-tiny.cfg'
@@ -270,7 +272,11 @@ class people_yolo_publisher():
         image = self.bridge.imgmsg_to_cv2(img_data, "bgr8")
         img_boxes, boxes = detect_from_img(image)
         print(boxes)
-        self.image_pub_ir.publish(self.bridge.cv2_to_imgmsg(img_boxes, "bgr8"))
+        boxes = [Box(image,xyxy=box) for box in boxes]
+
+        map = makeConfidenceMapFromBoxes(image,boxes)
+        map = cv2.convertScaleAbs(map)
+        self.image_pub_ir.publish(self.bridge.cv2_to_imgmsg(map, "bgr8"))
 
     def zed_callback(self, img_data):
         image = self.bridge.imgmsg_to_cv2(img_data, "bgr8")
