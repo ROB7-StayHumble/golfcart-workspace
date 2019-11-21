@@ -242,7 +242,7 @@ def detect_from_img(img):
                     if view_img and int(cls) == 0:  # Add bbox to image
                         label = '%s %.2f' % (classes[int(cls)], conf)
                         plot_one_box(xyxy, im0, label=label, color=colors[int(cls)])
-                        box = [int(x) for x in [*xyxy]]
+                        box = {'coords':[int(x) for x in [*xyxy]], 'conf':float(conf)}
                         boxes.append(box)
 
             print('%sDone. (%.3fs)' % ('', time.time() - t))
@@ -272,10 +272,11 @@ class people_yolo_publisher():
         image = self.bridge.imgmsg_to_cv2(img_data, "bgr8")
         img_boxes, boxes = detect_from_img(image)
         print(boxes)
-        boxes = [Box(image,xyxy=box) for box in boxes]
+        self.image_pub_ir.publish(self.bridge.cv2_to_imgmsg(img_boxes, "bgr8"))
+        boxes = [Box(image,xyxy=box['coords'],confidence=box['conf']) for box in boxes]
 
         map = makeConfidenceMapFromBoxes(image,boxes)
-        map = cv2.convertScaleAbs(map)
+        map = cv2.convertScaleAbs(map, alpha=255/map.max())
         self.image_pub_ir.publish(self.bridge.cv2_to_imgmsg(map, "bgr8"))
 
     def zed_callback(self, img_data):
