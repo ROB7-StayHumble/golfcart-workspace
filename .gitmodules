@@ -1,2 +1,4 @@
 [submodule "catkin_ws/src/vision_opencv"]
 	url = https://github.com/ros-perception/vision_opencv
+[submodule "catkin_ws/src/persondetection/include/yolov3"]
+	url = https://github.com/ultralytics/yolov3
