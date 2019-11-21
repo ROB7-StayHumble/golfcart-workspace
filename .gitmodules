@@ -1,4 +1,4 @@
 [submodule "catkin_ws/src/visualization/include/KittiSeg"]
-	url = https://github.com/MarvinTeichmann/KittiSeg
+	url = https://github.com/ROB7-StayHumble/KittiSeg.git
 [submodule "catkin_ws/src/vision_opencv"]
 	url = https://github.com/ros-perception/vision_opencv
