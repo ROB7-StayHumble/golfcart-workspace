@@ -6,7 +6,7 @@ import sys
 import rospy
 import cv2
 from std_msgs.msg import String
-from sensor_msgs.msg import Image, LaserScan
+
 from cv_bridge import CvBridge, CvBridgeError
 import os
 import argparse
@@ -25,11 +25,11 @@ OUTPUT =    'output'
 DATA =      'data/coco.data'
 
 HALF = False
-VIEW_IMG = False
+VIEW_IMG = True
 CONF_THRESH = 0.3
 NMS_THRESH = 0.5
 
-def detect(save_txt=False, save_img=False):
+def detect_from_folder(save_txt=False, save_img=False):
     with torch.no_grad():
         img_size = 416
         out, source, weights, half, view_img = OUTPUT, SOURCE, WEIGHTS, HALF, VIEW_IMG
@@ -149,22 +149,137 @@ def detect(save_txt=False, save_img=False):
 
         print('Done. (%.3fs)' % (time.time() - t0))
 
+def detect_from_img(img):
+    print("Running detection")
+    with torch.no_grad():
+        img_size = 416
+        out, source, weights, half, view_img = OUTPUT, SOURCE, WEIGHTS, HALF, VIEW_IMG
 
-# if __name__ == '__main__':
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument('--cfg', type=str, default='cfg/yolov3-spp.cfg', help='cfg file path')
-    # parser.add_argument('--data', type=str, default='data/coco.data', help='coco.data file path')
-    # parser.add_argument('--weights', type=str, default='weights/yolov3-spp.weights', help='path to weights file')
-    # parser.add_argument('--source', type=str, default='data/samples', help='source')  # input file/folder, 0 for webcam
-    # parser.add_argument('--output', type=str, default='output', help='output folder')  # output folder
-    # parser.add_argument('--img-size', type=int, default=416, help='inference size (pixels)')
-    # parser.add_argument('--conf-thres', type=float, default=0.3, help='object confidence threshold')
-    # parser.add_argument('--nms-thres', type=float, default=0.5, help='iou threshold for non-maximum suppression')
-    # parser.add_argument('--fourcc', type=str, default='mp4v', help='output video codec (verify ffmpeg support)')
-    # parser.add_argument('--half', action='store_true', help='half precision FP16 inference')
-    # parser.add_argument('--device', default='', help='device id (i.e. 0 or 0,1) or cpu')
-    # parser.add_argument('--view-img', action='store_true', help='display results')
-    # opt = parser.parse_args()
-    # print(opt)
+        # Initialize
+        device = torch_utils.select_device(device='')
 
-detect()
+        # Initialize model
+        model = Darknet(CFG, img_size)
+
+        # Load weights
+        attempt_download(weights)
+        if weights.endswith('.pt'):  # pytorch format
+            model.load_state_dict(torch.load(weights, map_location=device)['model'])
+        else:  # darknet format
+            _ = load_darknet_weights(model, weights)
+
+        # Second-stage classifier
+        classify = False
+        if classify:
+            modelc = torch_utils.load_classifier(name='resnet101', n=2)  # initialize
+            modelc.load_state_dict(torch.load('weights/resnet101.pt', map_location=device)['model'])  # load weights
+            modelc.to(device).eval()
+
+        # Fuse Conv2d + BatchNorm2d layers
+        # model.fuse()
+
+        # Eval mode
+        model.to(device).eval()
+
+        # Half precision
+        half = half and device.type != 'cpu'  # half precision only supported on CUDA
+        if half:
+            model.half()
+
+        # Set Dataloader
+        save_img = False
+
+        # Get classes and colors
+        classes = load_classes(parse_data_cfg(DATA)['names'])
+        colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(classes))]
+
+        img0s = img  # BGR
+        img0 = img
+        im0 = img
+        assert img0 is not None, 'Image is None'
+        # Padded resize
+        img = letterbox(img0, new_shape=img_size)[0]
+
+        # Normalize RGB
+        img = img[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB
+        img = np.ascontiguousarray(img, dtype=np.float16 if HALF else np.float32)  # uint8 to fp16/fp32
+        img /= 255.0  # 0 - 255 to 0.0 - 1.0
+
+
+        # Run inference
+        t0 = time.time()
+
+        t = time.time()
+
+        # Get detections
+        img = torch.from_numpy(img).to(device)
+        if img.ndimension() == 3:
+            img = img.unsqueeze(0)
+        pred = model(img)[0]
+
+        if HALF:
+            pred = pred.float()
+
+        # Apply NMS
+        pred = non_max_suppression(pred, CONF_THRESH, NMS_THRESH)
+
+        # Apply
+        if classify:
+            pred = apply_classifier(pred, modelc, img, im0s)
+
+        # Process detections
+        for i, det in enumerate(pred):  # detections per image
+            s = ''
+            if det is not None and len(det):
+                # Rescale boxes from img_size to im0 size
+                det[:, :4] = scale_coords(img.shape[2:], det[:, :4], im0.shape).round()
+
+                # Print results
+                for c in det[:, -1].unique():
+                    n = (det[:, -1] == c).sum()  # detections per class
+                    s += '%g %ss, ' % (n, classes[int(c)])  # add to string
+
+                # Write results
+                for *xyxy, conf, _, cls in det:
+                    if view_img:  # Add bbox to image
+                        label = '%s %.2f' % (classes[int(cls)], conf)
+                        plot_one_box(xyxy, im0, label=label, color=colors[int(cls)])
+
+            print('%sDone. (%.3fs)' % ('', time.time() - t))
+
+            # Stream results
+            # if view_img:
+            #     cv2.imshow('yolo', im0)
+            #     cv2.waitKey(0)
+
+    return im0
+
+from sensor_msgs.msg import Image, LaserScan
+
+class people_yolo_publisher():
+
+    def __init__(self):
+        rospy.init_node('camera_handler', anonymous=True)
+        self.bridge = CvBridge()
+
+        rospy.Subscriber("/ircam_data", Image, self.ir_callback)
+
+        self.image_pub_ir = rospy.Publisher("/people_yolo_ir",Image)
+
+    def ir_callback(self, img_data):
+        print("new image")
+        image = self.bridge.imgmsg_to_cv2(img_data, "bgr8")
+        boxes = detect_from_img(image)
+        self.image_pub_ir.publish(self.bridge.cv2_to_imgmsg(boxes, "bgr8"))
+
+
+if __name__ == '__main__':
+    try:
+        detector = people_yolo_publisher()
+        rospy.spin()
+
+    except rospy.ROSInterruptException:
+        rospy.loginfo("people_yolo_publisher node terminated.")
+
+
+# detect_from_folder()
