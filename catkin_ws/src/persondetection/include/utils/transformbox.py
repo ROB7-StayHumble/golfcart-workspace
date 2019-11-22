@@ -7,7 +7,7 @@ import scipy.io
 from utils.img_utils import plot_polygons
 import os
 
-path = '/home/nemo/Documents/rob7/golfcart-workspace/catkin_ws/src/persondetection/include/utils/'
+path = '/home/zacefron/Desktop/golfcart-workspace/catkin_ws/src/persondetection/include/utils/'
 folder = '1571825077852250111'
 # load transformation info
 points_dict = scipy.io.loadmat(path+'tf_points/'+folder+'/points.mat')

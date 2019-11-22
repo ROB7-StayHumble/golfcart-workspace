@@ -19,6 +19,7 @@ from yolov3.utils.utils import *
 from utils.boxes import *
 
 from utils.transformbox import get_boxes_zedframe
+from connected_components.connectedcomponents import *
 
 os.chdir('src/persondetection/include/yolov3/')
 CFG =       'cfg/yolov3-tiny.cfg'
@@ -271,15 +272,18 @@ class people_yolo_publisher():
         self.image_pub_zed = rospy.Publisher("/people_yolo_zed", Image)
         self.image_pub_zedir = rospy.Publisher("/people_yolo_zedir", Image)
         self.image_pub_map = rospy.Publisher("/people_yolo_map", Image)
+        self.image_pub_connectedcomp = rospy.Publisher("/people_yolo_connectedcomp", Image)
 
         self.boxes_zedframe_class = []
         self.boxes_combined = []
 
     def ir_callback(self, img_data):
         image = self.bridge.imgmsg_to_cv2(img_data, "bgr8")
+        img_connectedcomp = detect_connected_components(image)
         img_boxes, boxes = detect_from_img(image)
         # print(boxes)
         self.image_pub_ir.publish(self.bridge.cv2_to_imgmsg(img_boxes, "bgr8"))
+        self.image_pub_connectedcomp.publish(self.bridge.cv2_to_imgmsg(img_connectedcomp, "bgr8"))
         boxes_class = [Box(image,xyxy=box['coords'],confidence=box['conf']) for box in boxes]
         confs = [box['conf'] for box in boxes]
         boxes_zedframe = get_boxes_zedframe([box['coords'] for box in boxes])
