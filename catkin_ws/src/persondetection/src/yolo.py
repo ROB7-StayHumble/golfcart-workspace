@@ -11,6 +11,7 @@ from cv_bridge import CvBridge, CvBridgeError
 import os
 import argparse
 from sys import platform
+import glob
 
 from yolov3.models import *  # set ONNX_EXPORT in models.py
 from yolov3.utils.datasets import *
@@ -258,6 +259,38 @@ def detect_from_img(img):
 
 from sensor_msgs.msg import Image, LaserScan
 
+FOLDER_EVAL = '/home/nemo/Documents/rob7/combo_eval/'
+
+def get_GT_timestamps():
+    IMG_H = 720
+    IMG_W = 1280
+    gt_timestamps = []
+    for filepath in glob.glob(FOLDER_EVAL + "GT_ZED/*.txt"):
+        print(filepath)
+        timestamp = filepath.split("/")[-1].split("_")[0] # assuming files are named as follows: 1571825140101861494_zed.txt
+        print(timestamp)
+        with open(filepath) as txtfile:
+            gt_image = np.zeros((IMG_H, IMG_W, 3))
+            for line in txtfile:
+                box = line.strip("\n").split(" ")
+                if box[0] == '0':  # person category
+                    print(box)
+                    x = float(box[1]) * IMG_W
+                    y = float(box[2]) * IMG_H
+                    h = float(box[4]) * IMG_H
+                    w = float(box[3]) * IMG_W
+
+                    pnt_topleft = (int(x - w/2),int(y-h/2))
+                    pnt_bottright = (int(x + w/2),int(y+h/2))
+
+                    cv2.rectangle(gt_image, pnt_topleft, pnt_bottright,
+                                 color=(255,255,255),
+                                 thickness=cv2.FILLED,
+                                 lineType=8, shift=0)
+
+            cv2.imwrite(timestamp+'_GT.png',gt_image)
+            gt_timestamps.append(timestamp)
+    return gt_timestamps
 
 class people_yolo_publisher():
 
@@ -277,43 +310,62 @@ class people_yolo_publisher():
         self.boxes_zedframe_class = []
         self.boxes_combined = []
 
+        self.gt_timestamps = get_GT_timestamps()
+        print(self.gt_timestamps)
+        self.ir_last = None
+
     def ir_callback(self, img_data):
+        print("--> IR")
         image = self.bridge.imgmsg_to_cv2(img_data, "bgr8")
-        img_connectedcomp = detect_connected_components(image)
+        self.ir_last = image
+        # img_connectedcomp = detect_connected_components(image)
         img_boxes, boxes = detect_from_img(image)
         # print(boxes)
         self.image_pub_ir.publish(self.bridge.cv2_to_imgmsg(img_boxes, "bgr8"))
-        self.image_pub_connectedcomp.publish(self.bridge.cv2_to_imgmsg(img_connectedcomp, "bgr8"))
+        # self.image_pub_connectedcomp.publish(self.bridge.cv2_to_imgmsg(img_connectedcomp, "bgr8"))
         boxes_class = [Box(image,xyxy=box['coords'],confidence=box['conf']) for box in boxes]
         confs = [box['conf'] for box in boxes]
         boxes_zedframe = get_boxes_zedframe([box['coords'] for box in boxes])
         for i,box in enumerate(boxes_zedframe):
-            print(box)
+            # print(box)
             min_x = int(np.min([coord[0] for coord in box]))
             max_x = int(np.max([coord[0] for coord in box]))
             max_y = int(np.max([coord[1] for coord in box]))
             min_y = int(np.min([coord[1] for coord in box]))
             self.boxes_zedframe_class.append({'coords':[min_x,min_y,max_x,max_y],
                                               'conf':confs[i]})
-        if len(self.boxes_zedframe_class)>20:
-            self.boxes_zedframe_class = self.boxes_zedframe_class[-20:]
+        # if len(self.boxes_zedframe_class)>20:
+        #     self.boxes_zedframe_class = self.boxes_zedframe_class[-20:]
         # map = makeConfidenceMapFromBoxes(image,boxes_class)
         # map = cv2.convertScaleAbs(map, alpha=255/map.max())
         # self.image_pub_ir.publish(self.bridge.cv2_to_imgmsg(map, "bgr8"))
 
     def zed_callback(self, img_data):
+        print("--> ZED")
+        timestamp = str(img_data.header.stamp)
+        print(timestamp)
         image = self.bridge.imgmsg_to_cv2(img_data, "bgr8")
         img_boxes, boxes = detect_from_img(image)
+
         self.image_pub_zed.publish(self.bridge.cv2_to_imgmsg(img_boxes, "bgr8"))
         boxes_zed_class = [Box(image, xyxy=box['coords'], confidence=box['conf']) for box in boxes]
-        self.boxes_combined = boxes_zed_class
-        for box in self.boxes_zedframe_class:
-            print(box)
-            box_class = Box(image, xyxy=box['coords'], confidence=box['conf'])
-            self.boxes_combined.append(box_class)
+        if len(boxes_zed_class) > 0:
+            self.boxes_combined = boxes_zed_class
+            for box in self.boxes_zedframe_class:
+                # print(box)
+                box_class = Box(image, xyxy=box['coords'], confidence=box['conf'])
+                self.boxes_combined.append(box_class)
+        else: self.boxes_combined = [Box(image, xyxy=box['coords'], confidence=box['conf']) for box in self.boxes_zedframe_class]
+        self.boxes_zedframe_class = []
         map = makeConfidenceMapFromBoxes(image,self.boxes_combined)
         map = cv2.convertScaleAbs(map, alpha=255/map.max())
         self.image_pub_map.publish(self.bridge.cv2_to_imgmsg(map, "bgr8"))
+        # if timestamp in self.gt_timestamps:
+        print(timestamp)
+        print(FOLDER_EVAL + timestamp + '_YOLOboxes.png')
+        cv2.imwrite(FOLDER_EVAL + timestamp + '_YOLOboxes.png',img_boxes)
+        cv2.imwrite(FOLDER_EVAL + timestamp + '_map.png',map)
+        cv2.imwrite(FOLDER_EVAL + timestamp + '_IR.png', self.ir_last)
 
 if __name__ == '__main__':
     try:
