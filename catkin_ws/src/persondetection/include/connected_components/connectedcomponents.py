@@ -25,7 +25,7 @@ def calculate_confidence_score(box_x,box_y,model_slope=SLOPE['y_height'],model_i
     score = 1 - diff/(diff_max*box_y)
     #print(diff)
     #print(box_x,box_y,model_slope,model_intercept,score)
-    return score
+    return np.round(score,decimals=2)
 
 def combine_confidence_scores(scores):
     total_score = 1

@@ -344,7 +344,8 @@ class people_yolo_publisher():
     def zed_callback(self, img_data):
         print("--> ZED")
         timestamp = str(img_data.header.stamp)
-        print(timestamp)
+        seq = str(img_data.header.seq)
+        print(timestamp,seq)
         image = self.bridge.imgmsg_to_cv2(img_data, "bgr8")
         img_boxes, boxes = detect_from_img(image)
 
