@@ -35,7 +35,8 @@ def combine_confidence_scores(scores):
 
 def detect_connected_components(orig_img):
     img_h, img_w = orig_img.shape[:2]
-    img = orig_img[:,:,0]
+    img = orig_img
+    img = img[:,:,0]
 
 
     avgPixelIntensity = cv2.mean( img )
@@ -86,6 +87,7 @@ def detect_connected_components(orig_img):
 
     # create the random number
     random = Random()
+    boxes = []
 
     for i in range(1, num_labels):
         left = stats[i, cv2.CC_STAT_LEFT]
@@ -100,12 +102,14 @@ def detect_connected_components(orig_img):
 
         score_yh = calculate_confidence_score(rel_y,rel_h,SLOPE['y_height'],INTERCEPT['y_height'])
         score_aspect_ratio = calculate_confidence_score(rel_h,rel_w,SLOPE['aspect_ratio'],INTERCEPT['aspect_ratio'])
-        #total_score = (score_yh + score_aspect_ratio)/2
-        total_score = score_aspect_ratio
-        if total_score > 0.5 and h > 100:
+        total_score = np.mean([score_yh,score_aspect_ratio])
+        # total_score = score_yh
+        if total_score > 0.3 and h > 50:
             print(total_score)
             box_color = (random_color(random))
+            boxes.append({'coords':[left, top, left + w, top + h],
+                         'conf':total_score})
             cv2.rectangle(cimg, (left, top), (left + w, top + h), box_color, 2)
             cv2.putText(cimg, str(np.round(total_score,decimals=2)), (left-10, top-10), cv2.FONT_HERSHEY_PLAIN, 1.0, box_color, 1)
 
-    return cimg
+    return cimg, boxes

@@ -317,12 +317,13 @@ class people_yolo_publisher():
     def ir_callback(self, img_data):
         print("--> IR")
         image = self.bridge.imgmsg_to_cv2(img_data, "bgr8")
-        self.ir_last = image
-        # img_connectedcomp = detect_connected_components(image)
-        img_boxes, boxes = detect_from_img(image)
-        # print(boxes)
+
+        img_connectedcomp, boxes_connectedcomp = detect_connected_components(image.copy())
+        img_boxes, boxes_yolo = detect_from_img(image.copy())
+        boxes = np.concatenate((boxes_yolo,boxes_connectedcomp))
+        self.ir_last = img_boxes
         self.image_pub_ir.publish(self.bridge.cv2_to_imgmsg(img_boxes, "bgr8"))
-        # self.image_pub_connectedcomp.publish(self.bridge.cv2_to_imgmsg(img_connectedcomp, "bgr8"))
+        self.image_pub_connectedcomp.publish(self.bridge.cv2_to_imgmsg(img_connectedcomp, "bgr8"))
         boxes_class = [Box(image,xyxy=box['coords'],confidence=box['conf']) for box in boxes]
         confs = [box['conf'] for box in boxes]
         boxes_zedframe = get_boxes_zedframe([box['coords'] for box in boxes])
