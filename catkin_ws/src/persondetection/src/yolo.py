@@ -31,7 +31,7 @@ DATA =      'data/coco.data'
 
 HALF = False
 VIEW_IMG = True
-CONF_THRESH = 0.3
+CONF_THRESH = 0.2
 NMS_THRESH = 0.5
 
 def detect_from_folder(save_txt=False, save_img=False):
@@ -310,8 +310,8 @@ class people_yolo_publisher():
         self.boxes_zedframe_class = []
         self.boxes_combined = []
 
-        self.gt_timestamps = get_GT_timestamps()
-        print(self.gt_timestamps)
+        # self.gt_timestamps = get_GT_timestamps()
+        # print(self.gt_timestamps)
         self.ir_last = None
 
     def ir_callback(self, img_data):

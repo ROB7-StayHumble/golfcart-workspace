@@ -104,7 +104,7 @@ def detect_connected_components(orig_img):
         score_aspect_ratio = calculate_confidence_score(rel_h,rel_w,SLOPE['aspect_ratio'],INTERCEPT['aspect_ratio'])
         total_score = np.mean([score_yh,score_aspect_ratio])
         # total_score = score_yh
-        if total_score > 0.3 and h > 50:
+        if total_score > 0.3 and h > 50 and top + h > 200:
             print(total_score)
             box_color = (random_color(random))
             boxes.append({'coords':[left, top, left + w, top + h],
