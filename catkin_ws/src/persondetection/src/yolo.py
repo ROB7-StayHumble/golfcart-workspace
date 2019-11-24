@@ -191,9 +191,6 @@ def detect_from_img(img):
         if half:
             model.half()
 
-        # Set Dataloader
-        save_img = False
-
         # Get classes and colors
         classes = load_classes(parse_data_cfg(DATA)['names'])
         colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(classes))]
@@ -210,10 +207,8 @@ def detect_from_img(img):
         img = np.ascontiguousarray(img, dtype=np.float16 if HALF else np.float32)  # uint8 to fp16/fp32
         img /= 255.0  # 0 - 255 to 0.0 - 1.0
 
-
         # Run inference
         t0 = time.time()
-
         t = time.time()
 
         # Get detections
@@ -227,10 +222,6 @@ def detect_from_img(img):
 
         # Apply NMS
         pred = non_max_suppression(pred, CONF_THRESH, NMS_THRESH)
-
-        # Apply
-        if classify:
-            pred = apply_classifier(pred, modelc, img, im0s)
 
         boxes = []
         # Process detections
@@ -313,6 +304,7 @@ class people_yolo_publisher():
         # self.gt_timestamps = get_GT_timestamps()
         # print(self.gt_timestamps)
         self.ir_last = None
+        self.zed_last = None
 
     def ir_callback(self, img_data):
         print("--> IR")
@@ -326,15 +318,7 @@ class people_yolo_publisher():
         self.image_pub_connectedcomp.publish(self.bridge.cv2_to_imgmsg(img_connectedcomp, "bgr8"))
         boxes_class = [Box(image,xyxy=box['coords'],confidence=box['conf']) for box in boxes]
         confs = [box['conf'] for box in boxes]
-        boxes_zedframe = get_boxes_zedframe([box['coords'] for box in boxes])
-        for i,box in enumerate(boxes_zedframe):
-            # print(box)
-            min_x = int(np.min([coord[0] for coord in box]))
-            max_x = int(np.max([coord[0] for coord in box]))
-            max_y = int(np.max([coord[1] for coord in box]))
-            min_y = int(np.min([coord[1] for coord in box]))
-            self.boxes_zedframe_class.append({'coords':[min_x,min_y,max_x,max_y],
-                                              'conf':confs[i]})
+        self.boxes_zedframe_class = get_boxes_zedframe(boxes_class)
         # if len(self.boxes_zedframe_class)>20:
         #     self.boxes_zedframe_class = self.boxes_zedframe_class[-20:]
         # map = makeConfidenceMapFromBoxes(image,boxes_class)
@@ -352,22 +336,19 @@ class people_yolo_publisher():
         self.image_pub_zed.publish(self.bridge.cv2_to_imgmsg(img_boxes, "bgr8"))
         boxes_zed_class = [Box(image, xyxy=box['coords'], confidence=box['conf']) for box in boxes]
         if len(boxes_zed_class) > 0:
-            self.boxes_combined = boxes_zed_class
-            for box in self.boxes_zedframe_class:
-                # print(box)
-                box_class = Box(image, xyxy=box['coords'], confidence=box['conf'])
-                self.boxes_combined.append(box_class)
-        else: self.boxes_combined = [Box(image, xyxy=box['coords'], confidence=box['conf']) for box in self.boxes_zedframe_class]
+            self.boxes_combined = np.concatenate((boxes_zed_class,self.boxes_zedframe_class))
+        else: self.boxes_combined = self.boxes_zedframe_class
+        map = makeConfidenceMapFromBoxes(image, self.boxes_combined)
         self.boxes_zedframe_class = []
-        map = makeConfidenceMapFromBoxes(image,self.boxes_combined)
+
         map = cv2.convertScaleAbs(map, alpha=255/map.max())
         self.image_pub_map.publish(self.bridge.cv2_to_imgmsg(map, "bgr8"))
         # if timestamp in self.gt_timestamps:
         print(timestamp)
-        print(FOLDER_EVAL + timestamp + '_YOLOboxes.png')
-        cv2.imwrite(FOLDER_EVAL + timestamp + '_YOLOboxes.png',img_boxes)
-        cv2.imwrite(FOLDER_EVAL + timestamp + '_map.png',map)
-        cv2.imwrite(FOLDER_EVAL + timestamp + '_IR.png', self.ir_last)
+        # print(FOLDER_EVAL + timestamp + '_YOLOboxes.png')
+        # cv2.imwrite(FOLDER_EVAL + timestamp + '_YOLOboxes.png',img_boxes)
+        # cv2.imwrite(FOLDER_EVAL + timestamp + '_map.png',map)
+        # cv2.imwrite(FOLDER_EVAL + timestamp + '_IR.png', self.ir_last)
 
 if __name__ == '__main__':
     try:

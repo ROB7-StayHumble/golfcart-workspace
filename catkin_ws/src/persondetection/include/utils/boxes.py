@@ -2,6 +2,8 @@ import cv2
 import glob
 import numpy as np
 
+from utils.img_utils import angle_from_box
+
 class Box:
     def __init__(self, img, xyxy = None, center = None, size = None, confidence=None):
         self.img_h, self.img_w = img.shape[:2]
@@ -29,15 +31,28 @@ class Box:
                                 'y':int(self.y - self.y/2)}
             self.bottom_right = {   'x':int(self.x + self.w/2),
                                     'y':int(self.y + self.y/2)}
+            self.xyxy = [self.top_left['x'],self.top_left['y'],self.bottom_right['x'],self.bottom_right['y']]
         else:
+            self.xyxy = xyxy
             self.top_left = {'x':xyxy[0],
                              'y':xyxy[1]}
             self.bottom_right = {'x':xyxy[2],
                                  'y':xyxy[3]}
 
+        self.angle = angle_from_box(self.img,self.xyxy)
         if confidence == None:
             self.confidence = np.random.randint(0,100)/100
         else: self.confidence = confidence
+    def transform(self, xyxy):
+        self.xyxy = xyxy
+        self.top_left = {'x': xyxy[0],
+                         'y': xyxy[1]}
+        self.bottom_right = {'x': xyxy[2],
+                             'y': xyxy[3]}
+        self.h = self.bottom_right['y'] - self.top_left['y']
+        self.w = self.bottom_right['x'] - self.top_left['x']
+        self.x = self.w / 2
+        self.y = self.h / 2
     def drawOnImg(self, img = None):
         try:
             if len(img.shape) == 2:

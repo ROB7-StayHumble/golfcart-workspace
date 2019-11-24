@@ -6,6 +6,7 @@ import scipy.io
 
 from utils.img_utils import plot_polygons
 import os
+from utils.boxes import Box
 
 path = '/home/nemo/Documents/rob7/golfcart-workspace/catkin_ws/src/persondetection/include/utils/'
 folder = '1571825077852250111'
@@ -17,17 +18,20 @@ boxes = points_dict['boxes']
 def get_boxes_zedframe(boxes,tform=tf):
 	n = 0
 	boxes_tformed = []
-	for (xA, yA, xB, yB) in boxes:
-		
+	for box in boxes:
+		xA, yA, xB, yB = box.xyxy
 		w = xB - xA
 		h = yB - yA
 		box_corners = np.float32([[[xA,yA],[xB,yA],[xB,yB],[xA,yB]]])
 		#print(box_corners)
 		box_warped = cv2.perspectiveTransform(box_corners, tform)
-		if n == 0:
-			boxes_tformed = box_warped
-		else:
-			boxes_tformed = np.vstack((box_warped, boxes_tformed))
+		min_x = int(np.min([coord[0] for coord in box_warped[0]]))
+		max_x = int(np.max([coord[0] for coord in box_warped[0]]))
+		max_y = int(np.max([coord[1] for coord in box_warped[0]]))
+		min_y = int(np.min([coord[1] for coord in box_warped[0]]))
+		newbox = Box(img=box.img, xyxy=[min_x,min_y,max_x,max_y], confidence=box.confidence)
+		# box.transform(xyxy=[min_x,min_y,max_x,max_y])
+		boxes_tformed.append(newbox)
 		n += 1
 	return boxes_tformed
 
