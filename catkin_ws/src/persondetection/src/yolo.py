@@ -250,7 +250,7 @@ def detect_from_img(img):
 
 from sensor_msgs.msg import Image, LaserScan
 
-FOLDER_EVAL = '/home/nemo/Documents/rob7/combo_eval/'
+FOLDER_EVAL = '/home/zacefron/Desktop/YOLO annotations(400)-20191123T105218Z-001/'
 
 def get_GT_timestamps():
     IMG_H = 720
