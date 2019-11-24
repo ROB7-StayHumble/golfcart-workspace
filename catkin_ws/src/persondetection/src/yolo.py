@@ -305,12 +305,14 @@ class people_yolo_publisher():
         # print(self.gt_timestamps)
         self.ir_last = None
         self.zed_last = None
+        self.connectedcomp_last = None
 
     def ir_callback(self, img_data):
         print("--> IR")
         image = self.bridge.imgmsg_to_cv2(img_data, "bgr8")
 
         img_connectedcomp, boxes_connectedcomp = detect_connected_components(image.copy())
+        self.connectedcomp_last = img_connectedcomp
         img_boxes, boxes_yolo = detect_from_img(image.copy())
         boxes = np.concatenate((boxes_yolo,boxes_connectedcomp))
         self.ir_last = img_boxes
@@ -345,10 +347,12 @@ class people_yolo_publisher():
         self.image_pub_map.publish(self.bridge.cv2_to_imgmsg(map, "bgr8"))
         # if timestamp in self.gt_timestamps:
         print(timestamp)
-        # print(FOLDER_EVAL + timestamp + '_YOLOboxes.png')
-        # cv2.imwrite(FOLDER_EVAL + timestamp + '_YOLOboxes.png',img_boxes)
-        # cv2.imwrite(FOLDER_EVAL + timestamp + '_map.png',map)
-        # cv2.imwrite(FOLDER_EVAL + timestamp + '_IR.png', self.ir_last)
+        if timestamp in ['1571746625541402382']:
+            print(timestamp + '_YOLOboxes.png')
+            cv2.imwrite(timestamp + '_YOLOboxes.png',img_boxes)
+            cv2.imwrite(timestamp + '_map.png',map)
+            cv2.imwrite(timestamp + '_IR.png', self.ir_last)
+            cv2.imwrite(timestamp + '_connectedcomp.png',self.connectedcomp_last)
 
 if __name__ == '__main__':
     try:
