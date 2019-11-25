@@ -83,9 +83,10 @@ class Box:
 
 def makeConfidenceMapFromBoxes(img,boxes):
     map = np.float64(np.zeros_like(img))
-    for box in boxes:
+    boxes_sorted = sorted(boxes,key=lambda box: box.score)
+    for box in boxes_sorted:
         map[box.top_left['y']:box.bottom_right['y'],
-            box.top_left['x']:box.bottom_right['x']] += box.score
+            box.top_left['x']:box.bottom_right['x']] = box.score
     return map
 
 
