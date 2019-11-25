@@ -109,11 +109,11 @@ def detect_connected_components(orig_img):
         # total_score = score_yh
         total_score = np.mean([score_yh, score_aspect_ratio])
 
-        if total_score > 0.6 and h > 50 and top + h > 200:
+        if total_score > 0.3 and h > 50 and top + h > 200:
             # print(score_yh,score_aspect_ratio,total_score)
             box_color = (random_color(random))
             boxes.append({'coords':[left, top, left + w, top + h],
-                         'conf':total_score})
+                         'conf':np.round(total_score,decimals=2)})
             cv2.rectangle(cimg, (left, top), (left + w, top + h), box_color, 2)
             cv2.putText(cimg, str(np.round(total_score,decimals=2)), (left+10, top+h+20), cv2.FONT_HERSHEY_PLAIN, 1.5, box_color, 1)
 

@@ -291,10 +291,10 @@ class people_yolo_publisher():
         image = self.bridge.imgmsg_to_cv2(img_data, "bgr8")
 
         img_connectedcomp, boxes_connectedcomp = detect_connected_components(image.copy())
-        self.connectedcomp_last = img_connectedcomp
         img_boxes, boxes_yolo = detect_from_img(image.copy())
         boxes = np.concatenate((boxes_yolo,boxes_connectedcomp))
         self.ir_last = img_boxes
+        self.connectedcomp_last = img_connectedcomp
         self.image_pub_ir.publish(self.bridge.cv2_to_imgmsg(img_boxes, "bgr8"))
         self.image_pub_connectedcomp.publish(self.bridge.cv2_to_imgmsg(img_connectedcomp, "bgr8"))
         boxes_class = [Box(image,xyxy=box['coords'],confidence=box['conf']) for box in boxes]
@@ -308,29 +308,28 @@ class people_yolo_publisher():
 
     def zed_callback(self, img_data):
         timestamp = str(img_data.header.stamp)
+        image = self.bridge.imgmsg_to_cv2(img_data, "bgr8")
+        img_boxes, boxes = detect_from_img(image)
+
+        self.image_pub_zed.publish(self.bridge.cv2_to_imgmsg(img_boxes, "bgr8"))
+        boxes_zed_class = [Box(image, xyxy=box['coords'], confidence=box['conf']) for box in boxes]
+        if len(boxes_zed_class) > 0:
+            self.boxes_combined = np.concatenate((boxes_zed_class,self.boxes_zedframe_class))
+        else: self.boxes_combined = self.boxes_zedframe_class
+        map = makeConfidenceMapFromBoxes(image, self.boxes_combined)
+        self.boxes_zedframe_class = []
+
+        map = cv2.convertScaleAbs(map, alpha=255/map.max())
+        self.image_pub_map.publish(self.bridge.cv2_to_imgmsg(map, "bgr8"))
+        # if timestamp in self.gt_timestamps:
         if timestamp in self.gt_timestamps:
             print("--> ZED")
             seq = str(img_data.header.seq)
             print(timestamp,seq)
-            image = self.bridge.imgmsg_to_cv2(img_data, "bgr8")
-            img_boxes, boxes = detect_from_img(image)
-
-            self.image_pub_zed.publish(self.bridge.cv2_to_imgmsg(img_boxes, "bgr8"))
-            boxes_zed_class = [Box(image, xyxy=box['coords'], confidence=box['conf']) for box in boxes]
-            if len(boxes_zed_class) > 0:
-                self.boxes_combined = np.concatenate((boxes_zed_class,self.boxes_zedframe_class))
-            else: self.boxes_combined = self.boxes_zedframe_class
-            map = makeConfidenceMapFromBoxes(image, self.boxes_combined)
-            self.boxes_zedframe_class = []
-
-            map = cv2.convertScaleAbs(map, alpha=255/map.max())
-            self.image_pub_map.publish(self.bridge.cv2_to_imgmsg(map, "bgr8"))
-            # if timestamp in self.gt_timestamps:
-
-            cv2.imwrite('combo_output/' + timestamp + '_YOLOboxes.png',img_boxes)
-            cv2.imwrite('combo_output/' + timestamp + '_map.png',map)
-            cv2.imwrite('combo_output/' + timestamp + '_IR.png', self.ir_last)
-            cv2.imwrite('combo_output/' + timestamp + '_connectedcomp.png',self.connectedcomp_last)
+            cv2.imwrite('combo_output_connectedcomp/' + timestamp + '_YOLOboxes.png',img_boxes)
+            cv2.imwrite('combo_output_connectedcomp/' + timestamp + '_map.png',map)
+            cv2.imwrite('combo_output_connectedcomp/' + timestamp + '_IR.png', self.ir_last)
+            cv2.imwrite('combo_output_connectedcomp/' + timestamp + '_connectedcomp.png',self.connectedcomp_last)
 
 if __name__ == '__main__':
     try:
