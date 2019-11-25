@@ -59,7 +59,8 @@ class Box:
 
         score_yh = calculate_confidence_score(rel_y,rel_h,SLOPE['y_height'],INTERCEPT['y_height'])
         score_aspect_ratio = calculate_confidence_score(rel_h,rel_w,SLOPE['aspect_ratio'],INTERCEPT['aspect_ratio'])
-        total_score = np.mean([self.confidence,score_yh,score_aspect_ratio])
+        score_dimensions = np.round(score_yh,decimals=2)*np.round(score_aspect_ratio,decimals=2)
+        total_score = np.mean([self.confidence,score_dimensions])
 
         # print(total_score)
         self.score = np.round(total_score,decimals=2)
@@ -85,8 +86,9 @@ def makeConfidenceMapFromBoxes(img,boxes):
     map = np.float64(np.zeros_like(img))
     boxes_sorted = sorted(boxes,key=lambda box: box.score)
     for box in boxes_sorted:
-        map[box.top_left['y']:box.bottom_right['y'],
-            box.top_left['x']:box.bottom_right['x']] = box.score
+        if box.score > 0.5:
+            map[box.top_left['y']:box.bottom_right['y'],
+                box.top_left['x']:box.bottom_right['x']] = box.score
     return map
 
 

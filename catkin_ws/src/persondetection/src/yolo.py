@@ -325,7 +325,7 @@ class people_yolo_publisher():
 
         img_connectedcomp, boxes_connectedcomp = detect_connected_components(image.copy())
         img_boxes, boxes_yolo = detect_from_img(image.copy())
-        boxes = boxes_yolo
+        boxes = np.concatenate((boxes_yolo,boxes_connectedcomp))
         self.ir_last = img_boxes
         self.connectedcomp_last = img_connectedcomp
         self.image_pub_ir.publish(self.bridge.cv2_to_imgmsg(img_boxes, "bgr8"))
