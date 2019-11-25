@@ -243,7 +243,7 @@ def detect_from_img(img):
                 # Write results
                 for *xyxy, conf, _, cls in det:
                     if view_img and int(cls) == 0:  # Add bbox to image
-                        label = '%s %.2f' % (classes[int(cls)], conf)
+                        label = '%.2f' % conf
                         plot_one_box(xyxy, im0, label=label, color=colors[int(cls)])
                         box = {'coords':[int(x) for x in [*xyxy]], 'conf':float(conf)}
                         boxes.append(box)
@@ -259,7 +259,7 @@ def detect_from_img(img):
 
 from sensor_msgs.msg import Image, LaserScan
 
-FOLDER_EVAL = '/home/zacefron/Desktop/YOLO annotations(400)-20191123T105218Z-001/maps_connectedcomp/'
+FOLDER_EVAL = '/home/zacefron/Desktop/YOLO annotations(400)-20191123T105218Z-001/maps_connectedcomp_1125/'
 
 def get_GT_timestamps():
     IMG_H = 720
@@ -371,11 +371,11 @@ class people_yolo_publisher():
         self.image_pub_map.publish(self.bridge.cv2_to_imgmsg(map, "bgr8"))
         # if timestamp in self.gt_timestamps:
         print(timestamp)
-        # print(FOLDER_EVAL + timestamp + '_YOLOboxes.png')
-        # cv2.imwrite(FOLDER_EVAL + timestamp + '_YOLOboxes.png',img_boxes)
-        # cv2.imwrite(FOLDER_EVAL + timestamp + '_map.png',map)
-        # cv2.imwrite(FOLDER_EVAL + timestamp + '_IR.png', self.ir_last)
-        # cv2.imwrite(FOLDER_EVAL + timestamp + '_connectedcomp.png', self.connectedcomp_last)
+        print(FOLDER_EVAL + timestamp + '_YOLOboxes.png')
+        cv2.imwrite(FOLDER_EVAL + timestamp + '_YOLOboxes.png',img_boxes)
+        cv2.imwrite(FOLDER_EVAL + timestamp + '_map.png',map)
+        cv2.imwrite(FOLDER_EVAL + timestamp + '_IR.png', self.ir_last)
+        cv2.imwrite(FOLDER_EVAL + timestamp + '_connectedcomp.png', self.connectedcomp_last)
         # self.ir_last = None
         self.last_callback = 'zed'
 
