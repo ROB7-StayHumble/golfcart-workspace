@@ -316,6 +316,9 @@ class people_yolo_publisher():
         self.connectedcomp_last = None
 
     def ir_callback(self, img_data):
+        if self.last_callback == 'zed':
+            self.boxes_zedframe_class = []
+            print("emptying IR boxes")
         print("--> IR")
         image = self.bridge.imgmsg_to_cv2(img_data, "bgr8")
 
@@ -342,6 +345,7 @@ class people_yolo_publisher():
         # map = makeConfidenceMapFromBoxes(image,boxes_class)
         # map = cv2.convertScaleAbs(map, alpha=255/map.max())
         # self.image_pub_ir.publish(self.bridge.cv2_to_imgmsg(map, "bgr8"))
+        self.last_callback = 'ir'
 
     def zed_callback(self, img_data):
         print("--> ZED")
@@ -353,17 +357,15 @@ class people_yolo_publisher():
 
         self.image_pub_zed.publish(self.bridge.cv2_to_imgmsg(img_boxes, "bgr8"))
         boxes_zed_class = [Box(image, xyxy=box['coords'], confidence=box['conf']) for box in boxes]
+        boxes_ir_class = [Box(image, xyxy=box['coords'], confidence=box['conf']) for box in self.boxes_zedframe_class]
         if len(boxes_zed_class) > 0:
-            self.boxes_combined = boxes_zed_class
-            for box in self.boxes_zedframe_class:
-                # print(box)
-                box_class = Box(image, xyxy=box['coords'], confidence=box['conf'])
-                self.boxes_combined.append(box_class)
-        else: self.boxes_combined = [Box(image, xyxy=box['coords'], confidence=box['conf']) for box in self.boxes_zedframe_class]
-        if self.ir_last is not None:
-            self.boxes_zedframe_class = []
-        map = makeConfidenceMapFromBoxes(image,self.boxes_combined)
-        map = cv2.convertScaleAbs(map, alpha=255/map.max())
+            # self.boxes_combined = boxes_zed_class
+            self.boxes_combined = np.concatenate((boxes_zed_class,boxes_ir_class))
+        else: self.boxes_combined = boxes_ir_class
+
+        map_zed = makeConfidenceMapFromBoxes(image,boxes_zed_class)
+        map_ir = makeConfidenceMapFromBoxes(image,boxes_ir_class)
+        map = cv2.convertScaleAbs(map_ir, alpha=255/map_ir.max())
         self.image_pub_map.publish(self.bridge.cv2_to_imgmsg(map, "bgr8"))
         # if timestamp in self.gt_timestamps:
         print(timestamp)
@@ -372,7 +374,8 @@ class people_yolo_publisher():
         # cv2.imwrite(FOLDER_EVAL + timestamp + '_map.png',map)
         # cv2.imwrite(FOLDER_EVAL + timestamp + '_IR.png', self.ir_last)
         # cv2.imwrite(FOLDER_EVAL + timestamp + '_connectedcomp.png', self.connectedcomp_last)
-        self.ir_last = None
+        # self.ir_last = None
+        self.last_callback = 'zed'
 
 if __name__ == '__main__':
     try:
