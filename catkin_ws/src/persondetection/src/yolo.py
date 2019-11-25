@@ -314,6 +314,7 @@ class people_yolo_publisher():
         # print(self.gt_timestamps)
         self.ir_last = None
         self.connectedcomp_last = None
+        self.last_callback = None
 
     def ir_callback(self, img_data):
         if self.last_callback == 'zed':
@@ -365,7 +366,8 @@ class people_yolo_publisher():
 
         map_zed = makeConfidenceMapFromBoxes(image,boxes_zed_class)
         map_ir = makeConfidenceMapFromBoxes(image,boxes_ir_class)
-        map = cv2.convertScaleAbs(map_ir, alpha=255/map_ir.max())
+        map = map_ir + map_zed
+        map = cv2.convertScaleAbs(map, alpha=255/map.max())
         self.image_pub_map.publish(self.bridge.cv2_to_imgmsg(map, "bgr8"))
         # if timestamp in self.gt_timestamps:
         print(timestamp)
