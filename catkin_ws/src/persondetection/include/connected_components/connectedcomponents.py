@@ -5,10 +5,16 @@ from random import Random
 
 SLOPE = {}
 INTERCEPT = {}
-SLOPE['y_height'] = 1.4895764517770298
-INTERCEPT['y_height'] = -0.39868558556631667
-SLOPE['aspect_ratio'] = 0.24235466414464557
-INTERCEPT['aspect_ratio'] = 0.006346393882580452
+# SLOPE['y_height'] = 1.4895764517770298
+# INTERCEPT['y_height'] = -0.39868558556631667
+# SLOPE['aspect_ratio'] = 0.24235466414464557
+# INTERCEPT['aspect_ratio'] = 0.006346393882580452
+
+# ZED
+SLOPE['y_height'] = 1.838772993923768
+INTERCEPT['y_height'] = -0.592406200468761
+SLOPE['aspect_ratio'] = 0.2193557959956911
+INTERCEPT['aspect_ratio'] = 0.003921820805625677
 
 def distance_from_line(x,y,a,b):
     predicted_y = x*a + b
@@ -40,7 +46,7 @@ def detect_connected_components(orig_img):
 
 
     avgPixelIntensity = cv2.mean( img )
-    print("Average intensity of image: ", avgPixelIntensity[0])
+    # print("Average intensity of image: ", avgPixelIntensity[0])
     avg = avgPixelIntensity[0]
     #thresh = avg + 0.9*avg
     thresh = avg + 0.25*avg
@@ -95,21 +101,21 @@ def detect_connected_components(orig_img):
         w = stats[i, cv2.CC_STAT_WIDTH]
         h = stats[i, cv2.CC_STAT_HEIGHT]
 
-        rel_h = h/img_h
-        rel_w = w/img_w
-        rel_y = (top + h/2)/img_h
-        rel_x = (left + w/2)/img_w
+        # rel_h = h/img_h
+        # rel_w = w/img_w
+        # rel_y = (top + h/2)/img_h
+        # rel_x = (left + w/2)/img_w
 
-        score_yh = calculate_confidence_score(rel_y,rel_h,SLOPE['y_height'],INTERCEPT['y_height'])
-        score_aspect_ratio = calculate_confidence_score(rel_h,rel_w,SLOPE['aspect_ratio'],INTERCEPT['aspect_ratio'])
-        total_score = np.mean([score_yh,score_aspect_ratio])
+        # score_yh = calculate_confidence_score(rel_y,rel_h,SLOPE['y_height'],INTERCEPT['y_height'])
+        # score_aspect_ratio = calculate_confidence_score(rel_h,rel_w,SLOPE['aspect_ratio'],INTERCEPT['aspect_ratio'])
+        # total_score = np.mean([score_yh,score_aspect_ratio])
         # total_score = score_yh
-        if total_score > 0.3 and h > 50 and top + h > 200:
-            print(total_score)
+        if h > 50 and top + h > 200:
+        # print(total_score)
             box_color = (random_color(random))
             boxes.append({'coords':[left, top, left + w, top + h],
-                         'conf':total_score})
+                         'conf':1})
             cv2.rectangle(cimg, (left, top), (left + w, top + h), box_color, 2)
-            cv2.putText(cimg, str(np.round(total_score,decimals=2)), (left-10, top-10), cv2.FONT_HERSHEY_PLAIN, 1.0, box_color, 1)
+            # cv2.putText(cimg, str(np.round(total_score,decimals=2)), (left-10, top-10), cv2.FONT_HERSHEY_PLAIN, 1.0, box_color, 1)
 
     return cimg, boxes

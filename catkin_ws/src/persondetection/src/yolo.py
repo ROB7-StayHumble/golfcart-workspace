@@ -259,7 +259,7 @@ def detect_from_img(img):
 
 from sensor_msgs.msg import Image, LaserScan
 
-FOLDER_EVAL = '/home/nemo/Documents/rob7/combo_eval/'
+FOLDER_EVAL = '/home/zacefron/Desktop/YOLO annotations(400)-20191123T105218Z-001/maps_connectedcomp/'
 
 def get_GT_timestamps():
     IMG_H = 720
@@ -313,6 +313,7 @@ class people_yolo_publisher():
         # self.gt_timestamps = get_GT_timestamps()
         # print(self.gt_timestamps)
         self.ir_last = None
+        self.connectedcomp_last = None
 
     def ir_callback(self, img_data):
         print("--> IR")
@@ -320,11 +321,12 @@ class people_yolo_publisher():
 
         img_connectedcomp, boxes_connectedcomp = detect_connected_components(image.copy())
         img_boxes, boxes_yolo = detect_from_img(image.copy())
-        boxes = np.concatenate((boxes_yolo,boxes_connectedcomp))
+        boxes = boxes_yolo
         self.ir_last = img_boxes
+        self.connectedcomp_last = img_connectedcomp
         self.image_pub_ir.publish(self.bridge.cv2_to_imgmsg(img_boxes, "bgr8"))
         self.image_pub_connectedcomp.publish(self.bridge.cv2_to_imgmsg(img_connectedcomp, "bgr8"))
-        boxes_class = [Box(image,xyxy=box['coords'],confidence=box['conf']) for box in boxes]
+        # boxes_class = [Box(image,xyxy=box['coords'],confidence=box['conf']) for box in boxes]
         confs = [box['conf'] for box in boxes]
         boxes_zedframe = get_boxes_zedframe([box['coords'] for box in boxes])
         for i,box in enumerate(boxes_zedframe):
@@ -358,16 +360,19 @@ class people_yolo_publisher():
                 box_class = Box(image, xyxy=box['coords'], confidence=box['conf'])
                 self.boxes_combined.append(box_class)
         else: self.boxes_combined = [Box(image, xyxy=box['coords'], confidence=box['conf']) for box in self.boxes_zedframe_class]
-        self.boxes_zedframe_class = []
+        if self.ir_last is not None:
+            self.boxes_zedframe_class = []
         map = makeConfidenceMapFromBoxes(image,self.boxes_combined)
         map = cv2.convertScaleAbs(map, alpha=255/map.max())
         self.image_pub_map.publish(self.bridge.cv2_to_imgmsg(map, "bgr8"))
         # if timestamp in self.gt_timestamps:
         print(timestamp)
-        print(FOLDER_EVAL + timestamp + '_YOLOboxes.png')
-        cv2.imwrite(FOLDER_EVAL + timestamp + '_YOLOboxes.png',img_boxes)
-        cv2.imwrite(FOLDER_EVAL + timestamp + '_map.png',map)
-        cv2.imwrite(FOLDER_EVAL + timestamp + '_IR.png', self.ir_last)
+        # print(FOLDER_EVAL + timestamp + '_YOLOboxes.png')
+        # cv2.imwrite(FOLDER_EVAL + timestamp + '_YOLOboxes.png',img_boxes)
+        # cv2.imwrite(FOLDER_EVAL + timestamp + '_map.png',map)
+        # cv2.imwrite(FOLDER_EVAL + timestamp + '_IR.png', self.ir_last)
+        # cv2.imwrite(FOLDER_EVAL + timestamp + '_connectedcomp.png', self.connectedcomp_last)
+        self.ir_last = None
 
 if __name__ == '__main__':
     try:
