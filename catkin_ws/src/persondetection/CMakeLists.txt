@@ -162,6 +162,7 @@ include_directories(
  install(PROGRAMS
    src/hog.py
    src/yolo.py
+   src/testing/transformbox.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )
 
