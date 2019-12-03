@@ -36,20 +36,21 @@ def combine_confidence_scores(scores):
 def detect_connected_components(orig_img):
     img_h, img_w = orig_img.shape[:2]
     img = orig_img
-    img = img[:,:,0]
-
+    if len(orig_img.shape) > 2:
+        img = img[:,:,0]
 
     avgPixelIntensity = cv2.mean( img )
-    print("Average intensity of image: ", avgPixelIntensity[0])
+    # print("Average intensity of image: ", avgPixelIntensity[0])
     avg = avgPixelIntensity[0]
-    #thresh = avg + 0.9*avg
     thresh = avg + 0.25*avg
+    # thresh = int(avg + 0.25*avg)
 
     img[img > thresh] = 255
     img[img <= thresh] = 0
     img = 255 - img
 
-    img = cv2.bilateralFilter(img,5, 3, 10)
+    img = cv2.bilateralFilter(img, 5, 3, 10)
+
     #
     #Find average intensity to distinguish paper region
     # avgPixelIntensity = cv2.mean( img )
@@ -71,10 +72,7 @@ def detect_connected_components(orig_img):
         icolor = random.randint(0, 0xFFFFFF)
         return [icolor & 0xff, (icolor >> 8) & 0xff, (icolor >> 16) & 0xff]
 
-    #Read as Grayscale
-    if len(img.shape) == 2:
-        cimg = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
-    else: cimg = img
+
 
     # bilateralFilter to remove noisy region, comment to see its affect.
 
@@ -89,6 +87,11 @@ def detect_connected_components(orig_img):
     random = Random()
     boxes = []
 
+    #Read as Grayscale
+    if len(img.shape) == 2:
+        cimg = cv2.cvtColor(mask,cv2.COLOR_GRAY2BGR)
+    else: cimg = mask
+
     for i in range(1, num_labels):
         left = stats[i, cv2.CC_STAT_LEFT]
         top = stats[i, cv2.CC_STAT_TOP]
@@ -102,14 +105,22 @@ def detect_connected_components(orig_img):
 
         score_yh = calculate_confidence_score(rel_y,rel_h,SLOPE['y_height'],INTERCEPT['y_height'])
         score_aspect_ratio = calculate_confidence_score(rel_h,rel_w,SLOPE['aspect_ratio'],INTERCEPT['aspect_ratio'])
-        total_score = np.mean([score_yh,score_aspect_ratio])
+        # total_score = np.round(score_yh * score_aspect_ratio,decimals=2)
         # total_score = score_yh
+        total_score = np.mean([score_yh, score_aspect_ratio])
+
         if total_score > 0.3 and h > 50 and top + h > 200:
-            print(total_score)
+            # print(score_yh,score_aspect_ratio,total_score)
             box_color = (random_color(random))
             boxes.append({'coords':[left, top, left + w, top + h],
-                         'conf':total_score})
+                         'conf':np.round(total_score,decimals=2)})
             cv2.rectangle(cimg, (left, top), (left + w, top + h), box_color, 2)
-            cv2.putText(cimg, str(np.round(total_score,decimals=2)), (left-10, top-10), cv2.FONT_HERSHEY_PLAIN, 1.0, box_color, 1)
+            cv2.putText(cimg, str(np.round(total_score,decimals=2)), (left+10, top+h+20), cv2.FONT_HERSHEY_PLAIN, 1.5, box_color, 1)
 
     return cimg, boxes
+
+# orig = cv2.imread('/home/zacefron/Desktop/golfcart-sensorfusion/sensorfusion/cam_data/ir/ircam1571746634692805517.png',0)
+# cimg,boxes = detect_connected_components(orig.copy())
+# cv2.imshow('orig',orig)
+# cv2.imshow('cimg',cimg)
+# cv2.waitKey(0)

@@ -155,7 +155,7 @@ def detect_from_folder(save_txt=False, save_img=False):
         print('Done. (%.3fs)' % (time.time() - t0))
 
 def detect_from_img(img):
-    print("Running detection")
+    # print("Running detection")
     with torch.no_grad():
         img_size = 416
         out, source, weights, half, view_img = OUTPUT, SOURCE, WEIGHTS, HALF, VIEW_IMG
@@ -239,7 +239,7 @@ def detect_from_img(img):
                         box = {'coords':[int(x) for x in [*xyxy]], 'conf':float(conf)}
                         boxes.append(box)
 
-            print('%sDone. (%.3fs)' % ('', time.time() - t))
+            # print('%sDone. (%.3fs)' % ('', time.time() - t))
 
             # Stream results
             # if view_img:
@@ -250,36 +250,15 @@ def detect_from_img(img):
 
 from sensor_msgs.msg import Image, LaserScan
 
-FOLDER_EVAL = '/home/nemo/Documents/rob7/combo_eval/'
+FOLDER_EVAL = '/home/zacefron/Desktop/YOLO annotations(400)-20191123T105218Z-001/'
 
 def get_GT_timestamps():
     IMG_H = 720
     IMG_W = 1280
     gt_timestamps = []
-    for filepath in glob.glob(FOLDER_EVAL + "GT_ZED/*.txt"):
-        print(filepath)
-        timestamp = filepath.split("/")[-1].split("_")[0] # assuming files are named as follows: 1571825140101861494_zed.txt
-        print(timestamp)
-        with open(filepath) as txtfile:
-            gt_image = np.zeros((IMG_H, IMG_W, 3))
-            for line in txtfile:
-                box = line.strip("\n").split(" ")
-                if box[0] == '0':  # person category
-                    print(box)
-                    x = float(box[1]) * IMG_W
-                    y = float(box[2]) * IMG_H
-                    h = float(box[4]) * IMG_H
-                    w = float(box[3]) * IMG_W
-
-                    pnt_topleft = (int(x - w/2),int(y-h/2))
-                    pnt_bottright = (int(x + w/2),int(y+h/2))
-
-                    cv2.rectangle(gt_image, pnt_topleft, pnt_bottright,
-                                 color=(255,255,255),
-                                 thickness=cv2.FILLED,
-                                 lineType=8, shift=0)
-
-            cv2.imwrite(timestamp+'_GT.png',gt_image)
+    with open(FOLDER_EVAL + "GT_pairs/pairs.txt","r") as pairstxt:
+        for line in pairstxt:
+            timestamp = line.split(' ')[-1].strip('\n')
             gt_timestamps.append(timestamp)
     return gt_timestamps
 
@@ -301,21 +280,21 @@ class people_yolo_publisher():
         self.boxes_zedframe_class = []
         self.boxes_combined = []
 
-        # self.gt_timestamps = get_GT_timestamps()
-        # print(self.gt_timestamps)
+        self.gt_timestamps = get_GT_timestamps()
+        print(len(self.gt_timestamps),self.gt_timestamps)
         self.ir_last = None
         self.zed_last = None
         self.connectedcomp_last = None
 
     def ir_callback(self, img_data):
-        print("--> IR")
+        # print("--> IR")
         image = self.bridge.imgmsg_to_cv2(img_data, "bgr8")
 
         img_connectedcomp, boxes_connectedcomp = detect_connected_components(image.copy())
-        self.connectedcomp_last = img_connectedcomp
         img_boxes, boxes_yolo = detect_from_img(image.copy())
         boxes = np.concatenate((boxes_yolo,boxes_connectedcomp))
         self.ir_last = img_boxes
+        self.connectedcomp_last = img_connectedcomp
         self.image_pub_ir.publish(self.bridge.cv2_to_imgmsg(img_boxes, "bgr8"))
         self.image_pub_connectedcomp.publish(self.bridge.cv2_to_imgmsg(img_connectedcomp, "bgr8"))
         boxes_class = [Box(image,xyxy=box['coords'],confidence=box['conf']) for box in boxes]
@@ -328,10 +307,7 @@ class people_yolo_publisher():
         # self.image_pub_ir.publish(self.bridge.cv2_to_imgmsg(map, "bgr8"))
 
     def zed_callback(self, img_data):
-        print("--> ZED")
         timestamp = str(img_data.header.stamp)
-        seq = str(img_data.header.seq)
-        print(timestamp,seq)
         image = self.bridge.imgmsg_to_cv2(img_data, "bgr8")
         img_boxes, boxes = detect_from_img(image)
 
@@ -346,13 +322,14 @@ class people_yolo_publisher():
         map = cv2.convertScaleAbs(map, alpha=255/map.max())
         self.image_pub_map.publish(self.bridge.cv2_to_imgmsg(map, "bgr8"))
         # if timestamp in self.gt_timestamps:
-        print(timestamp)
-        if timestamp in ['1571746625541402382']:
-            print(timestamp + '_YOLOboxes.png')
-            cv2.imwrite(timestamp + '_YOLOboxes.png',img_boxes)
-            cv2.imwrite(timestamp + '_map.png',map)
-            cv2.imwrite(timestamp + '_IR.png', self.ir_last)
-            cv2.imwrite(timestamp + '_connectedcomp.png',self.connectedcomp_last)
+        if timestamp in self.gt_timestamps:
+            print("--> ZED")
+            seq = str(img_data.header.seq)
+            print(timestamp,seq)
+            cv2.imwrite('combo_output_connectedcomp/' + timestamp + '_YOLOboxes.png',img_boxes)
+            cv2.imwrite('combo_output_connectedcomp/' + timestamp + '_map.png',map)
+            cv2.imwrite('combo_output_connectedcomp/' + timestamp + '_IR.png', self.ir_last)
+            cv2.imwrite('combo_output_connectedcomp/' + timestamp + '_connectedcomp.png',self.connectedcomp_last)
 
 if __name__ == '__main__':
     try:
