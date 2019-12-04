@@ -2,8 +2,7 @@ import cv2
 import glob
 import numpy as np
 
-from utils.img_utils import angle_from_box
-
+from connected_components.connectedcomponents import calculate_confidence_score
 class Box:
     def __init__(self, img, xyxy = None, center = None, size = None, confidence=None):
         self.img_h, self.img_w = img.shape[:2]
@@ -38,21 +37,29 @@ class Box:
                              'y':xyxy[1]}
             self.bottom_right = {'x':xyxy[2],
                                  'y':xyxy[3]}
+            self.h = xyxy[3] - xyxy[1]
+            self.w = xyxy[2] - xyxy[0]
+            self.x = xyxy[0] + self.w/2
+            self.y = xyxy[1] + self.h/2
 
         self.angle = angle_from_box(self.img,self.xyxy)
         if confidence == None:
             self.confidence = np.random.randint(0,100)/100
         else: self.confidence = confidence
-    def transform(self, xyxy):
-        self.xyxy = xyxy
-        self.top_left = {'x': xyxy[0],
-                         'y': xyxy[1]}
-        self.bottom_right = {'x': xyxy[2],
-                             'y': xyxy[3]}
-        self.h = self.bottom_right['y'] - self.top_left['y']
-        self.w = self.bottom_right['x'] - self.top_left['x']
-        self.x = self.w / 2
-        self.y = self.h / 2
+
+        rel_h = self.h/self.img_h
+        rel_w = self.w/self.img_w
+        rel_y = self.y/self.img_h
+        rel_x = self.x/self.img_w
+
+        score_yh = np.power(calculate_confidence_score(rel_y, rel_h, SLOPE['y_height'], INTERCEPT['y_height']),2)
+        score_aspect_ratio = np.power(calculate_confidence_score(rel_h, rel_w, SLOPE['aspect_ratio'], INTERCEPT['aspect_ratio']), 2)
+        score_dimensions = np.round(np.round(score_yh, decimals=2) * np.round(score_aspect_ratio, decimals=2),decimals=2)
+        total_score = score_dimensions
+
+        # print(total_score)
+        self.score = np.round(total_score,decimals=2)
+        print(self.score)
     def drawOnImg(self, img = None):
         try:
             if len(img.shape) == 2:
@@ -72,9 +79,11 @@ class Box:
 
 def makeConfidenceMapFromBoxes(img,boxes):
     map = np.float64(np.zeros_like(img))
-    for box in boxes:
-        map[box.top_left['y']:box.bottom_right['y'],
-            box.top_left['x']:box.bottom_right['x']] += box.confidence
+    boxes_sorted = sorted(boxes,key=lambda box: box.score)
+    for box in boxes_sorted:
+        if box.score > 0.5:
+            map[box.top_left['y']:box.bottom_right['y'],
+                box.top_left['x']:box.bottom_right['x']] = box.score
     return map
 
 

@@ -10,6 +10,12 @@ INTERCEPT['y_height'] = -0.592323173694313
 SLOPE['aspect_ratio'] = 0.2196364045520636
 INTERCEPT['aspect_ratio'] = 0.02153938390717812
 
+# ZED
+SLOPE['y_height'] = 1.838772993923768
+INTERCEPT['y_height'] = -0.592406200468761
+SLOPE['aspect_ratio'] = 0.2193557959956911
+INTERCEPT['aspect_ratio'] = 0.003921820805625677
+
 def distance_from_line(x,y,a,b):
     predicted_y = x*a + b
     diff = np.abs(y - predicted_y)
@@ -98,24 +104,22 @@ def detect_connected_components(orig_img):
         w = stats[i, cv2.CC_STAT_WIDTH]
         h = stats[i, cv2.CC_STAT_HEIGHT]
 
-        rel_h = h/img_h
-        rel_w = w/img_w
-        rel_y = (top + h/2)/img_h
-        rel_x = (left + w/2)/img_w
+        # rel_h = h/img_h
+        # rel_w = w/img_w
+        # rel_y = (top + h/2)/img_h
+        # rel_x = (left + w/2)/img_w
 
-        score_yh = calculate_confidence_score(rel_y,rel_h,SLOPE['y_height'],INTERCEPT['y_height'])
-        score_aspect_ratio = calculate_confidence_score(rel_h,rel_w,SLOPE['aspect_ratio'],INTERCEPT['aspect_ratio'])
-        # total_score = np.round(score_yh * score_aspect_ratio,decimals=2)
+        # score_yh = calculate_confidence_score(rel_y,rel_h,SLOPE['y_height'],INTERCEPT['y_height'])
+        # score_aspect_ratio = calculate_confidence_score(rel_h,rel_w,SLOPE['aspect_ratio'],INTERCEPT['aspect_ratio'])
+        # total_score = np.mean([score_yh,score_aspect_ratio])
         # total_score = score_yh
-        total_score = np.mean([score_yh, score_aspect_ratio])
-
-        if total_score > 0.3 and h > 50 and top + h > 200:
-            # print(score_yh,score_aspect_ratio,total_score)
+        if h > 50 and top + h > 200:
+        # print(total_score)
             box_color = (random_color(random))
             boxes.append({'coords':[left, top, left + w, top + h],
-                         'conf':np.round(total_score,decimals=2)})
+                         'conf':1})
             cv2.rectangle(cimg, (left, top), (left + w, top + h), box_color, 2)
-            cv2.putText(cimg, str(np.round(total_score,decimals=2)), (left+10, top+h+20), cv2.FONT_HERSHEY_PLAIN, 1.5, box_color, 1)
+            # cv2.putText(cimg, str(np.round(total_score,decimals=2)), (left-10, top-10), cv2.FONT_HERSHEY_PLAIN, 1.0, box_color, 1)
 
     return cimg, boxes
 
