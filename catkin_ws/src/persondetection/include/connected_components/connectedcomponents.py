@@ -28,7 +28,7 @@ def calculate_confidence_score(box_x,box_y,model_slope=SLOPE['y_height'],model_i
                         distance_from_line(1,1,model_slope,model_intercept),
                         distance_from_line(1,0,model_slope,model_intercept)])
     diff = distance_from_line(box_x,box_y,model_slope,model_intercept)
-    score = 1 - diff/(diff_max*box_y)
+    score = 1 - diff/(diff_max)
     #print(diff)
     #print(box_x,box_y,model_slope,model_intercept,score)
     return np.round(score,decimals=2)

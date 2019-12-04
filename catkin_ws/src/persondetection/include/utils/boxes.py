@@ -57,10 +57,10 @@ class Box:
         rel_y = self.y/self.img_h
         rel_x = self.x/self.img_w
 
-        score_yh = calculate_confidence_score(rel_y,rel_h,SLOPE['y_height'],INTERCEPT['y_height'])
-        score_aspect_ratio = calculate_confidence_score(rel_h,rel_w,SLOPE['aspect_ratio'],INTERCEPT['aspect_ratio'])
-        score_dimensions = np.round(score_yh,decimals=2)*np.round(score_aspect_ratio,decimals=2)
-        total_score = np.mean([self.confidence,score_dimensions])
+        score_yh = np.power(calculate_confidence_score(rel_y, rel_h, SLOPE['y_height'], INTERCEPT['y_height']),2)
+        score_aspect_ratio = np.power(calculate_confidence_score(rel_h, rel_w, SLOPE['aspect_ratio'], INTERCEPT['aspect_ratio']), 2)
+        score_dimensions = np.round(np.round(score_yh, decimals=2) * np.round(score_aspect_ratio, decimals=2),decimals=2)
+        total_score = score_dimensions
 
         # print(total_score)
         self.score = np.round(total_score,decimals=2)
