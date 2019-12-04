@@ -3,18 +3,18 @@ import cv2
 import numpy as np
 from random import Random
 
-SLOPE = {}
-INTERCEPT = {}
+SLOPE = dict()
+INTERCEPT = dict()
 SLOPE['y_height'] = 1.838553092116205
 INTERCEPT['y_height'] = -0.592323173694313
 SLOPE['aspect_ratio'] = 0.2196364045520636
-INTERCEPT['aspect_ratio'] = 0.02153938390717812
+INTERCEPT['aspect_ratio'] = 0.004519400085200226
 
-# ZED
-SLOPE['y_height'] = 1.838772993923768
-INTERCEPT['y_height'] = -0.592406200468761
-SLOPE['aspect_ratio'] = 0.2193557959956911
-INTERCEPT['aspect_ratio'] = 0.003921820805625677
+# # ZED
+# SLOPE['y_height'] = 1.838772993923768
+# INTERCEPT['y_height'] = -0.592406200468761
+# SLOPE['aspect_ratio'] = 0.2193557959956911
+# INTERCEPT['aspect_ratio'] = 0.003921820805625677
 
 def distance_from_line(x,y,a,b):
     predicted_y = x*a + b

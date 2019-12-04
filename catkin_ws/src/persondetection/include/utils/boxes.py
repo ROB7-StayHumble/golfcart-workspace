@@ -60,23 +60,8 @@ class Box:
 
         # print(total_score)
         self.score = np.round(total_score,decimals=2)
-        print(self.score)
-    def drawOnImg(self, img = None):
-        try:
-            if len(img.shape) == 2:
-                img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
-        except:
-            img = self.color_img
-        box_color = (0,255,0)
-        img = cv2.rectangle(img,(self.top_left['x'],self.top_left['y']),(self.bottom_right['x'],self.bottom_right['y']),box_color,3)
-        img = cv2.circle(img,(self.x,self.y), int(self.img_h/50), (0,0,255), -1)
-        img = cv2.putText(img, str(np.round(self.confidence,decimals=2)), (self.top_left['x']-10, self.top_left['y']-10), cv2.FONT_HERSHEY_PLAIN, 1.0, box_color, 2)
-        return img
-    def makeConfidenceMap(self):
-        map = np.zeros_like(self.img)
-        map[self.top_left['y']:self.bottom_right['y'],
-            self.top_left['x']:self.bottom_right['x']] = 255
-        return map
+        # print(self.score)
+
 
 def makeConfidenceMapFromBoxes(img,boxes):
     map = np.float64(np.zeros_like(img))
@@ -84,6 +69,7 @@ def makeConfidenceMapFromBoxes(img,boxes):
     for box in boxes_sorted:
         map[box.top_left['y']:box.bottom_right['y'],
             box.top_left['x']:box.bottom_right['x']] = box.score
+    # map = cv2.convertScaleAbs(map, alpha=255)
     return map
 
 

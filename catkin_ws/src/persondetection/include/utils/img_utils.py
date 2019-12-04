@@ -10,6 +10,9 @@ colors = {
             'blue':(0,255,255)
 }
 
+ZED_h = 720
+ZED_w = 1280
+
 def angle_from_box(img,box):
     h,w = img.shape[:2]
     (xA, yA, xB, yB) = box
