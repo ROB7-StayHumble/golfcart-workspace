@@ -11,11 +11,6 @@ from utils.transformbox import get_boxes_zedframe
 from connected_components.connectedcomponents import *
 
 SLOPE = {}
-INTERCEPT = {}
-# SLOPE['y_height'] = 1.4895764517770298
-# INTERCEPT['y_height'] = -0.39868558556631667
-# SLOPE['aspect_ratio'] = 0.24235466414464557
-# INTERCEPT['aspect_ratio'] = 0.006346393882580452
 
 folder = "src/persondetection/src/testing/"
 cam = "zed"
@@ -23,29 +18,6 @@ cam = "zed"
 SMALL_SIZE = 8
 MEDIUM_SIZE = 10
 BIGGER_SIZE = 12
-
-# def distance_from_line(x,y,a,b):
-#     predicted_y = x*a + b
-#     diff = np.abs(y - predicted_y)
-#     return diff
-#
-# def calculate_confidence_score(box_x,box_y,model_slope=SLOPE['y_height'],model_intercept=INTERCEPT['y_height']):
-#
-#     diff_max = np.max([ distance_from_line(0,0,model_slope,model_intercept),
-#                         distance_from_line(0,1,model_slope,model_intercept),
-#                         distance_from_line(1,1,model_slope,model_intercept),
-#                         distance_from_line(1,0,model_slope,model_intercept)])
-#     diff = distance_from_line(box_x,box_y,model_slope,model_intercept)
-#     score = 1-(diff/diff_max)
-#     #print(diff)
-#     #print(box_x,box_y,model_slope,model_intercept,score)
-#     return score
-#
-# def combine_confidence_scores(scores):
-#     total_score = 1
-#     for score in scores:
-#         total_score *= score
-#     return total_score
 
 
 def get_random_dataframe():

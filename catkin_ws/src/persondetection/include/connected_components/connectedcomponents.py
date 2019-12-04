@@ -5,10 +5,10 @@ from random import Random
 
 SLOPE = {}
 INTERCEPT = {}
-SLOPE['y_height'] = 1.4895764517770298
-INTERCEPT['y_height'] = -0.39868558556631667
-SLOPE['aspect_ratio'] = 0.24235466414464557
-INTERCEPT['aspect_ratio'] = 0.006346393882580452
+SLOPE['y_height'] = 1.838553092116205
+INTERCEPT['y_height'] = -0.592323173694313
+SLOPE['aspect_ratio'] = 0.2196364045520636
+INTERCEPT['aspect_ratio'] = 0.02153938390717812
 
 def distance_from_line(x,y,a,b):
     predicted_y = x*a + b
