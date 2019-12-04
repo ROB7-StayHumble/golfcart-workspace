@@ -2,6 +2,7 @@ import cv2
 import glob
 import numpy as np
 
+from utils.img_utils import angle_from_box
 from connected_components.connectedcomponents import calculate_confidence_score
 class Box:
     def __init__(self, img, xyxy = None, center = None, size = None, confidence=None):
@@ -52,8 +53,8 @@ class Box:
         rel_y = self.y/self.img_h
         rel_x = self.x/self.img_w
 
-        score_yh = np.power(calculate_confidence_score(rel_y, rel_h, SLOPE['y_height'], INTERCEPT['y_height']),2)
-        score_aspect_ratio = np.power(calculate_confidence_score(rel_h, rel_w, SLOPE['aspect_ratio'], INTERCEPT['aspect_ratio']), 2)
+        score_yh = calculate_confidence_score(rel_y, rel_h)
+        score_aspect_ratio = calculate_confidence_score(rel_h, rel_w)
         score_dimensions = np.round(np.round(score_yh, decimals=2) * np.round(score_aspect_ratio, decimals=2),decimals=2)
         total_score = score_dimensions
 
@@ -81,9 +82,8 @@ def makeConfidenceMapFromBoxes(img,boxes):
     map = np.float64(np.zeros_like(img))
     boxes_sorted = sorted(boxes,key=lambda box: box.score)
     for box in boxes_sorted:
-        if box.score > 0.5:
-            map[box.top_left['y']:box.bottom_right['y'],
-                box.top_left['x']:box.bottom_right['x']] = box.score
+        map[box.top_left['y']:box.bottom_right['y'],
+            box.top_left['x']:box.bottom_right['x']] = box.score
     return map
 
 

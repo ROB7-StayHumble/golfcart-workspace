@@ -5,6 +5,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from random import Random
 
+from utils.boxes import *
+
 folder = "src/persondetection/src/testing/"
 
 masks = {
@@ -200,7 +202,8 @@ def detect_connected_components(imgpath):
     # plt.show()
     plt.savefig(folder+"results/connectedcomp/"+imgpath.split("/")[-1], bbox_inches='tight')
 
-    return cimg, boxes
+    boxes_class = [Box(cimg, xyxy=box) for box in boxes]
+    return cimg, boxes_class
 
 def thresholding(imgpath):
     img = cv2.imread(imgpath)
@@ -261,8 +264,12 @@ def histo(imgpath):
     return img
 
 
-for imgpath in glob.glob(folder+"test_img/*.png"):
+for imgpath in glob.glob(folder+"test_img/ircam*.png"):
     #thresholding(imgpath)
     print(imgpath)
-    detect_connected_components(imgpath)
+    cimg, boxes_class = detect_connected_components(imgpath)
+    map = makeConfidenceMapFromBoxes(cimg, boxes_class)
+    plt.figure(num=None)
+    plt.imshow(map)
+    plt.show()
     # histo(imgpath)
