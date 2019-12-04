@@ -163,6 +163,8 @@ include_directories(
    src/hog.py
    src/yolo.py
    src/testing/transformbox.py
+   src/testing/labelstats.py
+   src/testing/confidencescore_example.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )
 

@@ -8,7 +8,11 @@ folder = "src/persondetection/src/testing/"
 ir = cv2.imread(folder+"test_img/ircam1571825077852250111.png")
 zed = cv2.imread(folder+"test_img/zedcam1571825077852250111.png")
 
-boxes_ir = [{'coords':[206,194,276,372],'conf':1}]
+boxes_ir = [{'coords':[159,93,216,178],'conf':1},
+            {'coords':[522,84,566,270],'conf':1},
+            {'coords':[310,46,364,225],'conf':1},
+            {'coords':[651,94,696,189],'conf':1},
+            {'coords':[5,268,116,354],'conf':1}]
 boxes_ir_class = [Box(ir,xyxy=box['coords'],confidence=box['conf']) for box in boxes_ir]
 boxes_tf = get_boxes_zedframe(boxes_ir_class)
 
