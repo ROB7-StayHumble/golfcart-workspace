@@ -165,6 +165,7 @@ include_directories(
    src/testing/transformbox.py
    src/testing/labelstats.py
    src/testing/confidencescore_example.py
+   src/testing/thresholding.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )
 
