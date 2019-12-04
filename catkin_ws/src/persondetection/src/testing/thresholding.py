@@ -6,6 +6,10 @@ import matplotlib.pyplot as plt
 from random import Random
 
 from utils.boxes import *
+from utils.img_utils import *
+from utils.transformbox import get_boxes_zedframe
+
+SHOW_PLOTS = True
 
 folder = "src/persondetection/src/testing/"
 
@@ -202,8 +206,8 @@ def detect_connected_components(imgpath):
     # plt.show()
     plt.savefig(folder+"results/connectedcomp/"+imgpath.split("/")[-1], bbox_inches='tight')
 
-    boxes_class = [Box(cimg, xyxy=box) for box in boxes]
-    return cimg, boxes_class
+
+    return cimg, boxes
 
 def thresholding(imgpath):
     img = cv2.imread(imgpath)
@@ -260,16 +264,27 @@ def histo(imgpath):
     min_ylim, max_ylim = plt.ylim()
     plt.text(img.mean() * 1.1, max_ylim * 0.9, 'Mean: {:.2f}'.format(img.mean()))
 
-    plt.show()
+    if SHOW_PLOTS: plt.show()
     return img
 
 
 for imgpath in glob.glob(folder+"test_img/ircam*.png"):
     #thresholding(imgpath)
     print(imgpath)
-    cimg, boxes_class = detect_connected_components(imgpath)
-    map = makeConfidenceMapFromBoxes(cimg, boxes_class)
-    plt.figure(num=None)
+
+    cimg, boxes = detect_connected_components(imgpath)
+    boxes_zedframe = get_boxes_zedframe([Box(blank_ir_3D,xyxy=box,confidence=1) for box in boxes])
+    boxes_img = plot_boxes_on_img(blank_zed_3D,[box.xyxy for box in boxes_zedframe])
+    map = makeConfidenceMapFromBoxes(blank_zed_3D, boxes_zedframe)
+
+    images = [boxes_img, map]
+    plt.figure(num=None, figsize=(12, 4), dpi=300)
+
+    for i in range(len(images)):
+        plt.subplot(1, len(images), i + 1), plt.imshow(images[i], 'gray')
+        # plt.title(titles[i])
+        plt.xticks([]), plt.yticks([])
     plt.imshow(map)
-    plt.show()
+
+    if SHOW_PLOTS: plt.show()
     # histo(imgpath)
