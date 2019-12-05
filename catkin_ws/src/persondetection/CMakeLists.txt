@@ -167,6 +167,7 @@ include_directories(
    src/testing/testing_confidencescore_example.py
    src/testing/testing_thresholding.py
    src/testing/testing_yoloconfmap.py
+   src/testing/testing_confmap_eval.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )
 
