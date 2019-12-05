@@ -45,7 +45,7 @@ class Box:
 
         self.angle = angle_from_box(self.img,self.xyxy)
         if confidence == None:
-            self.confidence = np.random.randint(0,100)/100
+            self.confidence = 1
         else: self.confidence = confidence
 
         rel_h = self.h/self.img_h
@@ -53,14 +53,14 @@ class Box:
         rel_y = self.y/self.img_h
         rel_x = self.x/self.img_w
 
-        score_yh = calculate_confidence_score(rel_y, rel_h)
-        score_aspect_ratio = calculate_confidence_score(rel_h, rel_w)
-        score_dimensions = np.round(np.round(score_yh, decimals=2) * np.round(score_aspect_ratio, decimals=2),decimals=2)
+        score_yh = np.round(calculate_confidence_score(rel_y, rel_h),decimals=2)
+        score_aspect_ratio = np.round(calculate_confidence_score(rel_h, rel_w),decimals=2)
+        score_dimensions = np.round(score_yh * score_aspect_ratio,decimals=2)
         total_score = score_dimensions
 
         # print(total_score)
-        self.score = np.round(total_score,decimals=2)
-        # print(self.score)
+        self.score = total_score
+        print("YH",score_yh,"AR",score_aspect_ratio,"->",self.score)
 
 
 def makeConfidenceMapFromBoxes(img,boxes):

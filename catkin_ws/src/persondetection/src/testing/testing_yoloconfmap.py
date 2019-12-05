@@ -20,14 +20,18 @@ for imgpath in glob.glob(folder+"test_img/ircam*.png"):
     boxes_img = plot_boxes_on_img(blank_zed_3D,[box.xyxy for box in boxes_zedframe])
     map = makeConfidenceMapFromBoxes(blank_zed_3D, boxes_zedframe)
 
-    images = [boxes_img, map]
-    plt.figure(num=None, figsize=(12, 4), dpi=300)
+    images = [cimg, boxes_img, map]
+    titles = ["YOLOv3-tiny detection","Perspective transformation to\nZED camera frame", "Confidence map"]
+    fig = plt.figure(num=None, figsize=(12, 4), dpi=300)
 
+    plt.rcParams["axes.titlesize"] = 4
     for i in range(len(images)):
         plt.subplot(1, len(images), i + 1), plt.imshow(images[i], 'gray')
-        # plt.title(titles[i])
+        plt.title(titles[i])
         plt.xticks([]), plt.yticks([])
-    plt.imshow(map)
+
+    fig.tight_layout()
+    # plt.imshow(map)
 
     if SHOW_PLOTS: plt.show()
     # histo(imgpath)
