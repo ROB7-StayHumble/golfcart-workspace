@@ -29,7 +29,7 @@ def get_boxes_zedframe(boxes,tform=tf):
 		max_x = int(np.max([coord[0] for coord in box_warped[0]]))
 		max_y = int(np.max([coord[1] for coord in box_warped[0]]))
 		min_y = int(np.min([coord[1] for coord in box_warped[0]]))
-		newbox = Box(img=blank_zed_3D, xyxy=[min_x,min_y,max_x,max_y], confidence=None)
+		newbox = Box(img=blank_zed_3D, xyxy=[min_x,min_y,max_x,max_y], confidence=1)
 		# box.transform(xyxy=[min_x,min_y,max_x,max_y])
 		boxes_tformed.append(newbox)
 		n += 1
