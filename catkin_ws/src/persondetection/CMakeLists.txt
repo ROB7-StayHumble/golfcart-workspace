@@ -162,10 +162,11 @@ include_directories(
  install(PROGRAMS
    src/hog.py
    src/yolo.py
-   src/testing/transformbox.py
-   src/testing/labelstats.py
-   src/testing/confidencescore_example.py
-   src/testing/thresholding.py
+   src/testing/testing_transformbox.py
+   src/testing/testing_labelstats.py
+   src/testing/testing_confidencescore_example.py
+   src/testing/testing_thresholding.py
+   src/testing/testing_yoloconfmap.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )
 
