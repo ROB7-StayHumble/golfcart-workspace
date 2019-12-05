@@ -5,12 +5,12 @@ from yolov3.models import *  # set ONNX_EXPORT in models.py
 from yolov3.utils.datasets import *
 from yolov3.utils.utils import *
 
-os.chdir('src/persondetection/include/yolov3/')
-CFG =       'cfg/yolov3-tiny.cfg'
-WEIGHTS =   'weights/yolov3-tiny.weights'
-SOURCE =    'data/samples'
-OUTPUT =    'output'
-DATA =      'data/coco.data'
+folder = 'src/persondetection/include/yolov3/'
+CFG =       folder + 'cfg/yolov3-tiny.cfg'
+WEIGHTS =   folder + 'weights/yolov3-tiny.weights'
+SOURCE =    folder + 'data/samples'
+OUTPUT =    folder + 'output'
+DATA =      folder + 'data/coco.data'
 
 HALF = False
 VIEW_IMG = True
@@ -69,7 +69,8 @@ def detect_from_folder(save_txt=False, save_img=False):
         print(dataset)
 
         # Get classes and colors
-        classes = load_classes(parse_data_cfg(DATA)['names'])
+        # classes = load_classes(parse_data_cfg(DATA)['names'])
+        classes = ['person']
         colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(classes))]
 
         # Run inference
@@ -150,18 +151,8 @@ def detect_from_img(img):
         model = Darknet(CFG, img_size)
 
         # Load weights
-        attempt_download(weights)
-        if weights.endswith('.pt'):  # pytorch format
-            model.load_state_dict(torch.load(weights, map_location=device)['model'])
-        else:  # darknet format
-            _ = load_darknet_weights(model, weights)
-
-        # Second-stage classifier
-        classify = False
-        if classify:
-            modelc = torch_utils.load_classifier(name='resnet101', n=2)  # initialize
-            modelc.load_state_dict(torch.load('weights/resnet101.pt', map_location=device)['model'])  # load weights
-            modelc.to(device).eval()
+        # attempt_download(weights)
+        _ = load_darknet_weights(model, weights)
 
         # Fuse Conv2d + BatchNorm2d layers
         # model.fuse()
@@ -178,10 +169,11 @@ def detect_from_img(img):
         save_img = False
 
         # Get classes and colors
-        classes = load_classes(parse_data_cfg(DATA)['names'])
+        # classes = load_classes(parse_data_cfg(DATA)['names'])
+        classes = ['person']
         colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(classes))]
 
-        img0s = img  # BGR
+        # img0s = img  # BGR
         img0 = img
         im0 = img
         assert img0 is not None, 'Image is None'
@@ -210,10 +202,6 @@ def detect_from_img(img):
 
         # Apply NMS
         pred = non_max_suppression(pred, CONF_THRESH, NMS_THRESH)
-
-        # Apply
-        if classify:
-            pred = apply_classifier(pred, modelc, img, im0s)
 
         boxes = []
         # Process detections
