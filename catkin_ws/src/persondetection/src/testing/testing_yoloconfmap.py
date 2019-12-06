@@ -6,7 +6,7 @@ from utils.transformbox import get_boxes_zedframe
 from persondetection.run_yolo import *
 
 SHOW_PLOTS = True
-cam = "IR"
+cam = "ZED"
 
 folder = "src/persondetection/src/testing/"
 

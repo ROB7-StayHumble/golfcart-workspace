@@ -13,7 +13,8 @@ folder = "src/persondetection/src/testing/"
 
 pairs = [("1571746625368332498_ircam.png","1571746625385033721_zed.png","1571746625385033721_GT.png"),
          ("1571746631630210616_ircam.png","1571746631605020001_zed.png","1571746631605020001_GT.png"),
-         ("1571746633060068411_ircam.png","1571746633070918853_zed.png","1571746633070918853_GT.png")]
+         ("1571746633060068411_ircam.png","1571746633070918853_zed.png","1571746633070918853_GT.png"),
+         ("1571746634460540239_ircam.png","1571746634504400900_zed.png","1571746634504400900_GT.png")]
 
 for pair in pairs:
     ir = cv2.imread(folder+"test_img/ir/"+pair[0])
@@ -54,7 +55,7 @@ for pair in pairs:
         plt.xticks([]), plt.yticks([])
 
     filename = pair[1].split(".")[-2]
-    # plt.savefig(folder + "results/total_confmap/" + filename + "_detail.png", bbox_inches='tight')
+    plt.savefig(folder + "results/total_confmap/" + filename + "_detail.png", bbox_inches='tight')
 
     images = [gt,total_map]
     titles = ["Ground truth", "Total confidence map"]
@@ -66,5 +67,5 @@ for pair in pairs:
         plt.title(titles[i])
         plt.xticks([]), plt.yticks([])
 
-    # plt.savefig(folder + "results/total_confmap/"+filename+"_total.png", bbox_inches='tight')
-    plt.show()
+    plt.savefig(folder + "results/total_confmap/"+filename+"_total.png", bbox_inches='tight')
+    # plt.show()
