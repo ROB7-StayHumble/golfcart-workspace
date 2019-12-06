@@ -6,7 +6,8 @@ from utils.transformbox import get_boxes_zedframe
 from persondetection.run_yolo import *
 from connected_components.connectedcomponents import *
 
-SHOW_PLOTS = True
+SHOW_PLOTS = False
+SAVE_PLOTS = False
 cam = "IR"
 
 folder = "src/persondetection/src/testing/"
@@ -14,7 +15,14 @@ folder = "src/persondetection/src/testing/"
 pairs = [("1571746625368332498_ircam.png","1571746625385033721_zed.png","1571746625385033721_GT.png"),
          ("1571746631630210616_ircam.png","1571746631605020001_zed.png","1571746631605020001_GT.png"),
          ("1571746633060068411_ircam.png","1571746633070918853_zed.png","1571746633070918853_GT.png"),
-         ("1571746634460540239_ircam.png","1571746634504400900_zed.png","1571746634504400900_GT.png")]
+         ("1571746634460540239_ircam.png","1571746634504400900_zed.png","1571746634504400900_GT.png"),
+         ("1571746637887406440_ircam.png","1571746637903143927_zed.png","1571746637903143927_GT.png"),
+         ("1571746638219263494_ircam.png","1571746638201841864_zed.png","1571746638201841864_GT.png"),
+         ("1571746650581633948_ircam.png","1571746650603904756_zed.png","1571746650603904756_GT.png"),
+         ("1571746651846831705_ircam.png","1571746651669000660_zed.png","1571746651669000660_GT.png"),
+         ("1571746652679496222_ircam.png","1571746652703256760_zed.png","1571746652703256760_GT.png"),
+         ("1571746652813228854_ircam.png","1571746652834700756_zed.png","1571746652834700756_GT.png"),
+         ("1571746653079627742_ircam.png","1571746653035193106_zed.png","1571746653035193106_GT.png")]
 
 IOU = {}
 IOU_avg = {}
@@ -54,33 +62,35 @@ for pair in pairs:
             total_map_sum = (ir_yolo_map + ir_cc_map + zed_yolo_map)/3
 
             zed_yolo_img = cv2.cvtColor(zed_yolo_img, cv2.COLOR_BGR2RGB)
-            images = [ir_cc_img,ir_yolo_img,zed_yolo_img,
-                      ir_cc_map,ir_yolo_map,zed_yolo_map]
-            titles = ["Connected components on IR image","YOLOv3-tiny on IR image", "YOLOv3-tiny on RGB image"]
-            fig = plt.figure(num=None, figsize=(12, 4), dpi=300)
 
-            plt.rcParams["axes.titlesize"] = 6
-            for i in range(len(images)):
-                plt.subplot(2, len(images)/2, i + 1), plt.imshow(images[i], 'gray')
-                if i < len(titles):
+            if SAVE_PLOTS or SHOW_PLOTS:
+                images = [ir_cc_img,ir_yolo_img,zed_yolo_img,
+                          ir_cc_map,ir_yolo_map,zed_yolo_map]
+                titles = ["Connected components on IR image","YOLOv3-tiny on IR image", "YOLOv3-tiny on RGB image"]
+                fig = plt.figure(num=None, figsize=(12, 4), dpi=300)
+
+                plt.rcParams["axes.titlesize"] = 6
+                for i in range(len(images)):
+                    plt.subplot(2, len(images)/2, i + 1), plt.imshow(images[i], 'gray')
+                    if i < len(titles):
+                        plt.title(titles[i])
+                    plt.xticks([]), plt.yticks([])
+
+                filename = pair[1].split(".")[-2]
+                plt.savefig(folder + "results/total_confmap/" + filename + "_detail.png", bbox_inches='tight')
+
+                images = [total_map_sum,total_map_max]
+                titles = ["Total confidence map\n(Average approach)","Total confidence map\n(Element-wise maximum approach)"]
+                fig = plt.figure(num=None, figsize=(12, 4), dpi=300)
+
+                plt.rcParams["axes.titlesize"] = 8
+                for i in range(len(images)):
+                    plt.subplot(1, len(images), i + 1), plt.imshow(images[i], 'gray')
                     plt.title(titles[i])
-                plt.xticks([]), plt.yticks([])
+                    plt.xticks([]), plt.yticks([])
 
-            filename = pair[1].split(".")[-2]
-            plt.savefig(folder + "results/total_confmap/" + filename + "_detail.png", bbox_inches='tight')
-
-            images = [total_map_sum,total_map_max]
-            titles = ["Total confidence map\n(Average approach)","Total confidence map\n(Element-wise maximum approach)"]
-            fig = plt.figure(num=None, figsize=(12, 4), dpi=300)
-
-            plt.rcParams["axes.titlesize"] = 8
-            for i in range(len(images)):
-                plt.subplot(1, len(images), i + 1), plt.imshow(images[i], 'gray')
-                plt.title(titles[i])
-                plt.xticks([]), plt.yticks([])
-
-            plt.savefig(folder + "results/total_confmap/"+filename+"_total.png", bbox_inches='tight')
-            # plt.show()
+                plt.savefig(folder + "results/total_confmap/"+filename+"_total.png", bbox_inches='tight')
+                # plt.show()
 
             threshold = 0.7
 
@@ -106,20 +116,21 @@ for pair in pairs:
         iou = np.sum(gt_intersection)/np.sum(gt_union)
         IOU[mode].append(iou)
 
-        images = [gt, total_map_bin, np.float32(gt_intersection)]
-        titles = ["Ground truth",
-                  "Binarized confidence map\n(threshold:"+str(threshold)+")",
-                  "Overlap between ground truth and confidence map"]
-        fig = plt.figure(num=None, figsize=(12, 4), dpi=300)
+        if SAVE_PLOTS or SHOW_PLOTS:
+            images = [gt, total_map_bin, np.float32(gt_intersection)]
+            titles = ["Ground truth",
+                      "Binarized confidence map\n(threshold:"+str(threshold)+")",
+                      "Overlap between ground truth and confidence map"]
+            fig = plt.figure(num=None, figsize=(12, 4), dpi=300)
 
-        plt.rcParams["axes.titlesize"] = 8
-        for i in range(len(images)):
-            plt.subplot(1, len(images), i + 1), plt.imshow(images[i], 'gray')
-            plt.title(titles[i])
-            plt.xticks([]), plt.yticks([])
+            plt.rcParams["axes.titlesize"] = 8
+            for i in range(len(images)):
+                plt.subplot(1, len(images), i + 1), plt.imshow(images[i], 'gray')
+                plt.title(titles[i])
+                plt.xticks([]), plt.yticks([])
 
-        plt.savefig(folder + "results/gt_eval/" + mode + "/" + filename + ".png", bbox_inches='tight')
-        #plt.show()
+            plt.savefig(folder + "results/gt_eval/" + mode + "/" + filename + ".png", bbox_inches='tight')
+            #plt.show()
 
 print(IOU)
 
