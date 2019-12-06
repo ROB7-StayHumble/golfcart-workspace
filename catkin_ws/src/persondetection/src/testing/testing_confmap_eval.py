@@ -38,8 +38,9 @@ for pair in pairs:
     zed_yolo_map = makeConfidenceMapFromBoxes(blank_zed_3D, zed_yolo_boxes_zedframe)
 
     # total_map = (ir_yolo_map + ir_cc_map + zed_yolo_map)/3
-    ir_yolo_map[np.bitwise_and(ir_cc_map > 0,ir_yolo_map > 0)] = 1
-    total_map = np.maximum.reduce([ir_yolo_map, ir_cc_map, zed_yolo_map])
+    # ir_yolo_map[np.bitwise_and(ir_cc_map > 0,ir_yolo_map > 0)] = 1
+    total_map_max = np.maximum.reduce([ir_yolo_map, ir_cc_map, zed_yolo_map])
+    total_map_sum = (ir_yolo_map + ir_cc_map + zed_yolo_map)/3
 
     zed_yolo_img = cv2.cvtColor(zed_yolo_img, cv2.COLOR_BGR2RGB)
     images = [ir_cc_img,ir_yolo_img,zed_yolo_img,
@@ -57,8 +58,8 @@ for pair in pairs:
     filename = pair[1].split(".")[-2]
     plt.savefig(folder + "results/total_confmap/" + filename + "_detail.png", bbox_inches='tight')
 
-    images = [gt,total_map]
-    titles = ["Ground truth", "Total confidence map"]
+    images = [total_map_sum,total_map_max]
+    titles = ["Total confidence map\n(Average approach)","Total confidence map\n(Element-wise maximum approach)"]
     fig = plt.figure(num=None, figsize=(12, 4), dpi=300)
 
     plt.rcParams["axes.titlesize"] = 8
