@@ -16,6 +16,14 @@ pairs = [("1571746625368332498_ircam.png","1571746625385033721_zed.png","1571746
          ("1571746633060068411_ircam.png","1571746633070918853_zed.png","1571746633070918853_GT.png"),
          ("1571746634460540239_ircam.png","1571746634504400900_zed.png","1571746634504400900_GT.png")]
 
+IOU = {}
+IOU_avg = {}
+
+modes = ["combo", "ir+zed", "zed", "ir"]
+
+for mode in modes:
+    IOU[mode] = []
+
 for pair in pairs:
     ir = cv2.imread(folder+"test_img/ir/"+pair[0])
     ir_1channel = cv2.imread(folder + "test_img/ir/" + pair[0],0)
@@ -37,8 +45,8 @@ for pair in pairs:
     ir_cc_map = makeConfidenceMapFromBoxes(blank_zed_3D, ir_cc_boxes_zedframe)
     zed_yolo_map = makeConfidenceMapFromBoxes(blank_zed_3D, zed_yolo_boxes_zedframe)
 
-    modes = ["combo","ir+zed","zed","ir"]
     for mode in modes:
+
         if mode == "combo":
             # total_map = (ir_yolo_map + ir_cc_map + zed_yolo_map)/3
             # ir_yolo_map[np.bitwise_and(ir_cc_map > 0,ir_yolo_map > 0)] = 1
@@ -93,9 +101,12 @@ for pair in pairs:
         total_map_bin = total_map_max
         total_map_bin[total_map_max > threshold] = 1
         total_map_bin[total_map_max <= threshold] = 0
-        gt_overlap = np.float32(np.bitwise_and(total_map_bin > 0, gt > 0))
+        gt_intersection = np.bitwise_and(total_map_bin > 0, gt > 0)
+        gt_union = np.bitwise_or(total_map_bin > 0, gt > 0)
+        iou = np.sum(gt_intersection)/np.sum(gt_union)
+        IOU[mode].append(iou)
 
-        images = [gt, total_map_bin, gt_overlap]
+        images = [gt, total_map_bin, np.float32(gt_intersection)]
         titles = ["Ground truth",
                   "Binarized confidence map\n(threshold:"+str(threshold)+")",
                   "Overlap between ground truth and confidence map"]
@@ -109,3 +120,11 @@ for pair in pairs:
 
         plt.savefig(folder + "results/gt_eval/" + mode + "/" + filename + ".png", bbox_inches='tight')
         #plt.show()
+
+print(IOU)
+
+for key, val in IOU.items():
+    IOU_avg[key] = np.average(val)
+
+print(IOU_avg)
+
