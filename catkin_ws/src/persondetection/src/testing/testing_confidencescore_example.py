@@ -24,8 +24,8 @@ def plot_box_with_score(img,h,w,x,y):
     rel_x = x / img_w
     print(rel_h, rel_w, rel_x, rel_y)
 
-    score_yh = calculate_confidence_score(rel_y, rel_h)
-    score_aspect_ratio = calculate_confidence_score(rel_h, rel_w)
+    score_yh = calculate_confidence_score(rel_y, rel_h, model='y_height')
+    score_aspect_ratio = calculate_confidence_score(rel_h, rel_w, model='aspect_ratio')
     score_dimensions = np.round(np.round(score_yh, decimals=2) * np.round(score_aspect_ratio, decimals=2), decimals=2)
     if score_dimensions > 0.5: color = GREEN
     else: color = RED

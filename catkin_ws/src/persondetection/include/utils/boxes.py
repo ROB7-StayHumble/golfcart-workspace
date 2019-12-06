@@ -40,6 +40,7 @@ class Box:
                                  'y':xyxy[3]}
             self.h = xyxy[3] - xyxy[1]
             self.w = xyxy[2] - xyxy[0]
+
             self.x = xyxy[0] + self.w/2
             self.y = xyxy[1] + self.h/2
 
@@ -53,8 +54,8 @@ class Box:
         rel_y = self.y/self.img_h
         rel_x = self.x/self.img_w
 
-        score_yh = np.round(calculate_confidence_score(rel_y, rel_h),decimals=2)
-        score_aspect_ratio = np.round(calculate_confidence_score(rel_h, rel_w),decimals=2)
+        score_yh = calculate_confidence_score(rel_y, rel_h, model='y_height')
+        score_aspect_ratio = calculate_confidence_score(rel_h, rel_w, model='aspect_ratio')
         score_dimensions = np.round(score_yh * score_aspect_ratio,decimals=2)
         total_score = score_dimensions
 

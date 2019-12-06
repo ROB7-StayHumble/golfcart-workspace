@@ -21,7 +21,9 @@ def distance_from_line(x,y,a,b):
     diff = np.abs(y - predicted_y)
     return diff
 
-def calculate_confidence_score(box_x,box_y,model_slope=SLOPE['y_height'],model_intercept=INTERCEPT['y_height']):
+def calculate_confidence_score(box_x,box_y,model):
+    model_slope = SLOPE[model]
+    model_intercept = INTERCEPT[model]
 
     diff_max = np.max([ distance_from_line(0,0,model_slope,model_intercept),
                         distance_from_line(0,1,model_slope,model_intercept),
@@ -29,6 +31,8 @@ def calculate_confidence_score(box_x,box_y,model_slope=SLOPE['y_height'],model_i
                         distance_from_line(1,0,model_slope,model_intercept)])
     diff = distance_from_line(box_x,box_y,model_slope,model_intercept)
     score = np.power(1 - diff/(diff_max),2)
+
+    # score = 1 - diff / (diff_max)
     #print(diff)
     #print(box_x,box_y,model_slope,model_intercept,score)
     return np.round(score,decimals=2)
