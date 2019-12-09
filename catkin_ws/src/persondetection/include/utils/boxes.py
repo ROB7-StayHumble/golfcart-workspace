@@ -59,7 +59,7 @@ class Box:
             score_aspect_ratio = calculate_confidence_score(rel_h, rel_w, model='aspect_ratio')
             score_dimensions = np.round(score_yh * score_aspect_ratio,decimals=2)
             total_score = score_dimensions
-            print("YH", score_yh, "AR", score_aspect_ratio, "->", total_score)
+            # print("YH", score_yh, "AR", score_aspect_ratio, "->", total_score)
         else: total_score = 0
 
         # print(total_score)
