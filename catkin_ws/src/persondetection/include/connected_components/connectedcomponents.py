@@ -87,8 +87,6 @@ def detect_connected_components_updated(img):
     img[img <= thresh] = 0
     img = 255 - img
 
-    # img = cv2.bilateralFilter(img, 5, 3, 10)
-
     # based on https://stackoverflow.com/questions/40777826/detect-black-ink-blob-on-paper-opencv-android
 
     def random_color(random):
@@ -169,7 +167,7 @@ def detect_connected_components_updated(img):
     # # plt.show()
     # plt.savefig(folder + "results/connectedcomp/" + imgpath.split("/")[-1], bbox_inches='tight')
 
-    return cimg, boxes
+    return cimg, cgrad, boxes
 
 
 def detect_connected_components(orig_img):
