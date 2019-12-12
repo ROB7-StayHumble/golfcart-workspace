@@ -5,7 +5,7 @@ from yolov3.models import *  # set ONNX_EXPORT in models.py
 from yolov3.utils.datasets import *
 from yolov3.utils.utils import *
 
-folder = 'src/persondetection/include/yolov3/'
+folder = '/home/zacefron/Desktop/golfcart-workspace/catkin_ws/src/persondetection/include/yolov3/'
 CFG =       folder + 'cfg/yolov3-tiny.cfg'
 WEIGHTS =   folder + 'weights/yolov3-tiny.weights'
 SOURCE =    folder + 'data/samples'
