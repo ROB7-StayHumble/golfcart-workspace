@@ -138,7 +138,9 @@ def detect_from_folder(save_txt=False, save_img=False):
 
         print('Done. (%.3fs)' % (time.time() - t0))
 
-def detect_from_img(img):
+def detect_from_img(img, conf=None):
+    if conf is None:
+        conf = CONF_THRESH
     print("Running detection")
     with torch.no_grad():
         img_size = 416
@@ -201,7 +203,7 @@ def detect_from_img(img):
             pred = pred.float()
 
         # Apply NMS
-        pred = non_max_suppression(pred, CONF_THRESH, NMS_THRESH)
+        pred = non_max_suppression(pred, conf, NMS_THRESH)
 
         boxes = []
         # Process detections

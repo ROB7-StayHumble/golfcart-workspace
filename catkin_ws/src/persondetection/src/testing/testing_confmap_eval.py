@@ -46,8 +46,8 @@ precision_avg = {}
 recalls = {}
 recall_avg = {}
 
-modes = ["combo max", "combo sum", "zed", "ir+zed", "zed", "ir"]
-thresholds = np.linspace(0,1,num=50,endpoint=False)
+modes = ["combo max", "combo sum", "ir+zed", "zed", "ir"]
+thresholds = np.linspace(0,1,num=100,endpoint=False)
 
 for mode in modes:
     IOUs[mode] = {}
@@ -73,7 +73,7 @@ for i,pair in enumerate(pairs):
 
         gt = cv2.imread(folder + "test_img/gt/" + pair[2])
 
-        ir_cc_img, ir_cc_boxes = detect_connected_components_updated(ir_1channel)
+        ir_cc_img_thresh, ir_cc_img_grad, ir_cc_boxes = detect_connected_components_updated(ir_1channel)
         ir_yolo_img, ir_yolo_boxes = detect_from_img(ir)
         zed_yolo_img, zed_yolo_boxes = detect_from_img(zed)
 
@@ -103,7 +103,7 @@ for i,pair in enumerate(pairs):
                 zed_yolo_img = cv2.cvtColor(zed_yolo_img, cv2.COLOR_BGR2RGB)
 
                 if SAVE_PLOTS or SHOW_PLOTS:
-                    images = [ir_cc_img,ir_yolo_img,zed_yolo_img,
+                    images = [ir_cc_img_thresh,ir_yolo_img,zed_yolo_img,
                               ir_cc_map,ir_yolo_map,zed_yolo_map]
                     titles = ["Connected components on IR image","YOLOv3-tiny on IR image", "YOLOv3-tiny on RGB image"]
                     fig = plt.figure(num=None, figsize=(12, 4), dpi=300)
@@ -192,6 +192,8 @@ for i,pair in enumerate(pairs):
 
 # print(IOUs)
 
+
+
 data = []
 
 for mode in modes:
@@ -203,6 +205,19 @@ for mode in modes:
          'recall': recall_avg[mode][str(threshold)],
          'label': mode})
 
+F1s = {}
+F1s_max = {}
+for mode in modes:
+    F1s[mode] = {}
+    for threshold in thresholds:
+        p = precision_avg[mode][str(threshold)]
+        r = recall_avg[mode][str(threshold)]
+        if (p+r) > 0:
+            F1s[mode][str(threshold)] = (2*p*r)/(p+r)
+        else: F1s[mode][str(threshold)] = 0
+    F1s_max[mode] = np.max(np.array(list(F1s[mode].values())))
+    print(mode, "max F1:", F1s_max[mode])
+
 # print(IOU_avg['combo'],precision_avg['combo'],recall_avg['combo'])
 
 import pandas as pd
@@ -210,7 +225,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 df = pd.DataFrame(data)
-print(df)
+# print(df)
 
 sns.lineplot(x="recall", y="precision", hue="label", data=df)
 plt.show()
