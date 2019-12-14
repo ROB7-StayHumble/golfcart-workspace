@@ -111,7 +111,7 @@ def update_ir(image):
     if RUN_HOUGH:
         detected = draw_lanes(image)
         image_edges_inv = np.swapaxes(detected, 0, 1)
-        imgItem_ir_edges.setImage(image_edges_inv, autoDownsample=True)  # set the curve with this data
+    imgItem_ir_edges.setImage(image_edges_inv, autoDownsample=True)  # set the curve with this data
     QtGui.QApplication.processEvents()    # you MUST process the plot now
 
 angleLines = []
