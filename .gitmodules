@@ -1,3 +1,5 @@
+[submodule "catkin_ws/src/lanedetection/include/houghlanedetectpython"]
+	url = https://github.com/glhr/houghlanedetectpython.git
 [submodule "catkin_ws/src/lanedetection/include/KittiSeg"]
 	url = https://github.com/ROB7-StayHumble/KittiSeg.git
 [submodule "catkin_ws/src/vision_opencv"]
