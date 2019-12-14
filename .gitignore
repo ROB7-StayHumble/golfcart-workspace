@@ -53,3 +53,7 @@ qtcreator-*
 CATKIN_IGNORE
 
 .idea/
+
+catkin_ws/src/persondetection/src/testing/results/
+
+catkin_ws/src/persondetection/src/testing/test_img/
