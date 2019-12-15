@@ -8,7 +8,8 @@ setup_args = generate_distutils_setup(
               'KittiSeg.incl.seg_utils',
               'KittiSeg.incl.tensorvision',
               'KittiSeg.incl.evaluation',
-              'KittiSeg.incl.tensorflow_fcn'],
+              'KittiSeg.incl.tensorflow_fcn',
+              'houghlanedetectpython'],
     package_dir={'': 'include'},
 )
 setup(**setup_args)
