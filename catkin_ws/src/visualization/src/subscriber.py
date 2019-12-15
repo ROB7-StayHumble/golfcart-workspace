@@ -41,7 +41,8 @@ curve_lidar_smooth.getViewBox().setAspectLocked(True)
 curve_lidar_smooth.setPen(pg.mkPen({'color': (100, 255, 255, 150), 'width': 4}))
 
 p_ir_lane = winLane.addPlot(row=1, col=2, rowspan=1, title = 'IR cam')
-p_ir_edges = winLane.addPlot(row=1, col=3, rowspan=1, title='Hough transform')
+p_ir_edges = winLane.addPlot(row=1, col=3, rowspan=1, title='Hough transform (using LIDAR)')
+p_ir_edges_nolidar = winLane.addPlot(row=1, col=4, rowspan=1, title='Hough transform (without LIDAR)')
 # p_ir_kitti = winLane.addPlot(row=2, col=2, rowspan=1, title='KittiSeg')
 
 imgItem_ir_lane = pg.ImageItem()
@@ -55,6 +56,12 @@ curve_ir_edges = p_ir_edges.plot()
 curve_ir_edges.getViewBox().invertY(True)
 curve_ir_edges.getViewBox().setAspectLocked(True)
 p_ir_edges.addItem(imgItem_ir_edges)
+
+imgItem_ir_edges_nolidar = pg.ImageItem()
+curve_ir_edges_nolidar = p_ir_edges_nolidar.plot()
+curve_ir_edges_nolidar.getViewBox().invertY(True)
+curve_ir_edges_nolidar.getViewBox().setAspectLocked(True)
+p_ir_edges_nolidar.addItem(imgItem_ir_edges_nolidar)
 
 # imgItem_ir_kitti = pg.ImageItem()
 # curve_ir_kitti = p_ir_kitti.plot()
@@ -116,14 +123,18 @@ def update_ir(image):
     imgItem_ir_lane.setImage(image_ir_inv, autoDownsample=True)  # set the curve with this data
     if RUN_HOUGH:
         hough_edges = draw_lanes_from_img(image,lane_angle=lane_angle)
+        hough_edges_nolidar = draw_lanes_from_img(image, lane_angle=None)
         image_edges_inv = np.swapaxes(hough_edges, 0, 1)
+        image_edges_nolidar_inv = np.swapaxes(hough_edges_nolidar, 0, 1)
     imgItem_ir_edges.setImage(image_edges_inv, autoDownsample=True)  # set the curve with this data
+    imgItem_ir_edges_nolidar.setImage(image_edges_nolidar_inv, autoDownsample=True)  # set the curve with this data
     QtGui.QApplication.processEvents()    # you MUST process the plot now
 
 angleLines = []
 angles = np.arange(-90,90.5,0.5)
 # Realtime data plot. Each time this function is called, the data display is updated
 def update_lidar(lidar_ranges):
+    global lane_angle
     angleLines = []
     smooth = smooth_lidar_data('butter',angles,lidar_ranges)
     curve_lidar_lane.setData(angles, lidar_ranges)
