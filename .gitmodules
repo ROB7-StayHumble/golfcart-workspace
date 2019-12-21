@@ -2,3 +2,5 @@
 	url = https://github.com/ros-perception/vision_opencv
 [submodule "catkin_ws/src/persondetection/include/yolov3"]
 	url = https://github.com/ROB7-StayHumble/yolov3
+[submodule "catkin_ws/src/multi_tracker"]
+	url = https://github.com/ROB7-StayHumble/multi_tracker.git
