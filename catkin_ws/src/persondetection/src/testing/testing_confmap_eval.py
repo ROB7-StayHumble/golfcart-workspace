@@ -47,7 +47,7 @@ recalls = {}
 recall_avg = {}
 
 modes = ["combo max", "combo sum", "ir+zed", "zed", "ir"]
-thresholds = np.linspace(0,1,num=100,endpoint=False)
+thresholds = np.linspace(0,1,num=200,endpoint=False)
 
 for mode in modes:
     IOUs[mode] = {}
@@ -216,7 +216,13 @@ for mode in modes:
             F1s[mode][str(threshold)] = (2*p*r)/(p+r)
         else: F1s[mode][str(threshold)] = 0
     F1s_max[mode] = np.max(np.array(list(F1s[mode].values())))
-    print(mode, "max F1:", F1s_max[mode])
+    max_thresh = max(F1s[mode], key=F1s[mode].get)
+
+    print(mode, "max F1:", F1s_max[mode], "thresh", max_thresh)
+    print(mode, "---> precision", precision_avg[mode][max_thresh])
+    print(mode, "---> recall", recall_avg[mode][max_thresh])
+    print(mode, "---> IoU", IOU_avg[mode][max_thresh])
+
 
 # print(IOU_avg['combo'],precision_avg['combo'],recall_avg['combo'])
 
