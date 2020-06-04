@@ -12,8 +12,8 @@ INTERCEPT = {}
 
 img_h = 720
 img_w = 1280
-GREEN = (0,200,0)
-RED = (200,0,0)
+GREEN = (0,255,0)
+RED = (255,0,0)
 
 folder = "src/persondetection/src/testing/"
 
@@ -31,11 +31,13 @@ def plot_box_with_score(img,h,w,x,y):
     else: color = RED
     print(score_yh, score_aspect_ratio, score_dimensions)
     cv2.rectangle(img, (x, y), (x + w, y + h), color, 3)
-    cv2.putText(img, str(score_dimensions), (x, y - 15), cv2.FONT_HERSHEY_PLAIN, 2, color, 2)
+    cv2.putText(img, str(score_dimensions), (x, y - 15), cv2.FONT_HERSHEY_DUPLEX, 2.3, color, 2)
     return img
 
 
 img = np.zeros((img_h,img_w,3))
+img = cv2.imread(folder+"zedcam1571825077852250111.png")
+img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
 h = 100
 w = 600
@@ -68,7 +70,7 @@ plot_box_with_score(img,h,w,x,y)
 h = 200
 w = 70
 x = 900
-y = 50
+y = 100
 
 plot_box_with_score(img,h,w,x,y)
 
